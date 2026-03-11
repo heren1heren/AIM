@@ -1,8 +1,22 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import SignInPage from "../features/auth/pages/SignInPage"
+import HomeLayout from "../layouts/HomeLayout";
+import HomePage from "../pages/HomePage";
+import StudentLayout from "../layouts/StudentLayout";
+import StudentHomePage from "../features/students/pages/StudentHomePage";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminHomePage from "../features/admin/pages/AdminHomePage";
 
 export const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <HomeLayout />,
+        children: [
+            { index: true, element: <HomePage /> }
+        ]
+    },
+
     {
         path: "/auth",
         element: <AuthLayout />,
@@ -10,15 +24,12 @@ export const router = createBrowserRouter([
             { path: "login", element: <SignInPage /> }
         ]
     },
-    {
-        path: "/",
-        element: <Navigate to="/auth/login" replace />
-    },
+
     {
         path: "/admin",
-        element: <div />,
+        element: <AdminLayout />,
         children: [
-            { path: "dashboard", element: <div /> }
+            { path: "home", element: < AdminHomePage /> }
         ]
     },
     {
@@ -30,9 +41,9 @@ export const router = createBrowserRouter([
     },
     {
         path: "/student",
-        element: <div />,
+        element: <StudentLayout />,
         children: [
-            { path: "home", element: <div /> }
+            { path: "home", element: <StudentHomePage /> }
         ]
     },
     {
