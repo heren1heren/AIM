@@ -5,6 +5,8 @@ import HomeLayout from "../layouts/HomeLayout";
 import HomePage from "../pages/HomePage";
 import StudentLayout from "../layouts/StudentLayout";
 import StudentHomePage from "../features/students/pages/StudentHomePage";
+import AdminLayout from "../layouts/AdminLayout";
+import AdminHomePage from "../features/admin/pages/AdminHomePage";
 
 export const router = createBrowserRouter([
     {
@@ -25,9 +27,9 @@ export const router = createBrowserRouter([
 
     {
         path: "/admin",
-        element: <div />,
+        element: <AdminLayout />,
         children: [
-            { path: "dashboard", element: <div /> }
+            { path: "home", element: < AdminHomePage /> }
         ]
     },
     {

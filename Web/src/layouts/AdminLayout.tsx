@@ -13,15 +13,25 @@ import {
     ListItemButton,
     Menu,
     MenuItem,
-    Badge
+    Badge,
+    ListSubheader
 } from "@mui/material";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import Collapse from "@mui/material/Collapse";
+
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Outlet } from "react-router-dom";
 
-export default function StudentLayout() {
+export default function AdminLayout() {
     const [open, setOpen] = useState(false);
 
+    const [openTeacherTools, setOpenTeacherTools] = useState(false);
+    const [openAdminTools, setOpenAdminTools] = useState(false);
+
+    const toggleTeacherTools = () => setOpenTeacherTools(!openTeacherTools);
+    const toggleAdminTools = () => setOpenAdminTools(!openAdminTools);
 
     const [profileMenuAnchor, setProfileMenuAnchor] = useState<HTMLElement | null>(null);
     const [notifMenuAnchor, setNotifMenuAnchor] = useState<HTMLElement | null>(null);
@@ -107,32 +117,111 @@ export default function StudentLayout() {
 
             {/* Drawer menu */}
             <Drawer anchor="left" open={open} onClose={toggleDrawer(false)}>
-                <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
-                    <List>
-                        <ListItem disablePadding>
-                            <ListItemButton>
-                                <ListItemText primary="Home" />
-                            </ListItemButton>
-                        </ListItem>
+                <Box sx={{ width: 250 }} role="presentation">
 
-                        <ListItem disablePadding>
-                            <ListItemButton>
-                                <ListItemText primary="Content" />
-                            </ListItemButton>
-                        </ListItem>
+                    {/* Teacher Tools Group */}
+                    <List
+                        subheader={
+                            <ListSubheader
+                                component="div"
+                                onClick={toggleTeacherTools}
+                                sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                            >
+                                Teacher Tools
+                                {openTeacherTools ? <ExpandLess /> : <ExpandMore />}
+                            </ListSubheader>
+                        }
+                    >
+                        <Collapse in={openTeacherTools} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="My Courses" />
+                                    </ListItemButton>
+                                </ListItem>
 
-                        <ListItem disablePadding>
-                            <ListItemButton>
-                                <ListItemText primary="Grade" />
-                            </ListItemButton>
-                        </ListItem>
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Assignments" />
+                                    </ListItemButton>
+                                </ListItem>
 
-                        <ListItem disablePadding>
-                            <ListItemButton>
-                                <ListItemText primary="Assignments" />
-                            </ListItemButton>
-                        </ListItem>
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Submissions / Grading" />
+                                    </ListItemButton>
+                                </ListItem>
+
+
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Messages" />
+                                    </ListItemButton>
+                                </ListItem>
+                            </List>
+                        </Collapse>
                     </List>
+
+                    {/* Admin Tools Group */}
+                    <List
+                        subheader={
+                            <ListSubheader
+                                component="div"
+                                onClick={toggleAdminTools}
+                                sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                            >
+                                Admin Tools
+                                {openAdminTools ? <ExpandLess /> : <ExpandMore />}
+                            </ListSubheader>
+                        }
+                    >
+                        <Collapse in={openAdminTools} timeout="auto" unmountOnExit>
+                            <List component="div" disablePadding>
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Dashboard" />
+                                    </ListItemButton>
+                                </ListItem>
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Manage Users" />
+                                    </ListItemButton>
+                                </ListItem>
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Manage Courses" />
+                                    </ListItemButton>
+                                </ListItem>
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary=" Manage Enrollments" />
+                                    </ListItemButton>
+                                </ListItem>
+
+
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="Manage Notifications " />
+                                    </ListItemButton>
+                                </ListItem>
+
+
+
+
+                                <ListItem disablePadding>
+                                    <ListItemButton>
+                                        <ListItemText primary="System Settings" />
+                                    </ListItemButton>
+                                </ListItem>
+                            </List>
+                        </Collapse>
+                    </List>
+
                 </Box>
             </Drawer>
 

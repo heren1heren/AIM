@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type WordOfTheDay } from './../../../types/wordOfTheDay.ts';
+import { type WordOfTheDay } from '../types/wordOfTheDay';
 export function useWordOfTheDay() {
     const [data, setData] = useState<WordOfTheDay | null>(null);
     const [loading, setLoading] = useState(true);

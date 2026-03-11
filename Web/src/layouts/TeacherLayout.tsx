@@ -117,13 +117,7 @@ export default function StudentLayout() {
 
                         <ListItem disablePadding>
                             <ListItemButton>
-                                <ListItemText primary="Content" />
-                            </ListItemButton>
-                        </ListItem>
-
-                        <ListItem disablePadding>
-                            <ListItemButton>
-                                <ListItemText primary="Grade" />
+                                <ListItemText primary="My Courses" />
                             </ListItemButton>
                         </ListItem>
 
@@ -132,7 +126,28 @@ export default function StudentLayout() {
                                 <ListItemText primary="Assignments" />
                             </ListItemButton>
                         </ListItem>
+
+                        <ListItem disablePadding>
+                            <ListItemButton>
+                                <ListItemText primary="Submissions / Grading" />
+                            </ListItemButton>
+                        </ListItem>
+
+                        <ListItem disablePadding>
+                            <ListItemButton>
+                                <ListItemText primary="Notifications" />
+                            </ListItemButton>
+                        </ListItem>
+
+                        <ListItem disablePadding>
+                            <ListItemButton>
+                                <ListItemText primary="Messages" />
+                            </ListItemButton>
+                        </ListItem>
+
+
                     </List>
+
                 </Box>
             </Drawer>
 
