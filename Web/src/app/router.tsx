@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import SignInPage from "../features/auth/pages/SignInPage"
 import HomeLayout from "../layouts/HomeLayout";
@@ -48,6 +48,6 @@ export const router = createBrowserRouter([
     },
     {
         path: "*",
-        element: <div>404 Not Found</div>
+        element: <div>404 Not Found, you most likely enter an invalid url</div>
     }
 ]);
