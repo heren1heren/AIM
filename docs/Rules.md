@@ -1,6 +1,6 @@
 ## The branch specification supports the following prefixes and should be structured as:
 
-"<type>/<description>"
+
 
 main: The main development branch (e.g., main, master, or develop)
 
