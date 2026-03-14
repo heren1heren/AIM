@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { type WordOfTheDay } from '../types/wordOfTheDay';
-export function useWordOfTheDay() {
+import { type WordOfTheDay } from '../types/wordOfTheDay.type';
+export default function useWordOfTheDay() {
     const [data, setData] = useState<WordOfTheDay | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
