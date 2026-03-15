@@ -3,6 +3,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+
+    console.log('Seeding new data...');
+
     // Create Admin Users
     const admin1 = await prisma.user.create({
         data: {
@@ -43,6 +46,7 @@ async function main() {
             role: 'teacher',
             teacher: { create: {} },
         },
+        include: { teacher: true },
     });
 
     const teacher2 = await prisma.user.create({
@@ -53,6 +57,7 @@ async function main() {
             role: 'teacher',
             teacher: { create: {} },
         },
+        include: { teacher: true },
     });
 
     const teacher3 = await prisma.user.create({
@@ -63,6 +68,7 @@ async function main() {
             role: 'teacher',
             teacher: { create: {} },
         },
+        include: { teacher: true },
     });
 
     // Create Student Users
@@ -74,6 +80,7 @@ async function main() {
             role: 'student',
             student: { create: {} },
         },
+        include: { student: true },
     });
 
     const student2 = await prisma.user.create({
@@ -84,6 +91,7 @@ async function main() {
             role: 'student',
             student: { create: {} },
         },
+        include: { student: true },
     });
 
     const student3 = await prisma.user.create({
@@ -94,6 +102,7 @@ async function main() {
             role: 'student',
             student: { create: {} },
         },
+        include: { student: true },
     });
 
     // Create Classes
@@ -111,7 +120,7 @@ async function main() {
             name: 'Physics 101',
             description: 'Introduction to Physics',
             teacher: { connect: { id: teacher2.teacher.id } },
-            students: { connect: [{ id: student2.student.id }, { id: student3.student.id }] },
+            students: { connect: [{ id: student2.student.id }] },
         },
     });
 
@@ -124,131 +133,61 @@ async function main() {
         },
     });
 
-    // Create Assignments
-    const assignment1 = await prisma.assignment.create({
+    // Create Content for Classes
+    const content1 = await prisma.content.create({
         data: {
-            title: 'Algebra Homework',
-            description: 'Solve 10 algebra problems',
-            due_date: new Date('2026-03-15'),
+            title: 'Lesson 1: Algebra Basics',
+            description: 'This lesson covers the basics of algebra.',
+            urls: [
+                'https://example.com/algebra-video',
+                'https://example.com/algebra-notes',
+            ],
             class: { connect: { id: class1.id } },
+            files: {
+                create: [
+                    {
+                        url: 'https://example.com/file1.pdf',
+                        filename: 'Algebra Notes',
+                        mimetype: 'application/pdf',
+                        size: 1024,
+                        uploaded_by: teacher1.id,
+                    },
+                    {
+                        url: 'https://example.com/file2.mp4',
+                        filename: 'Algebra Video',
+                        mimetype: 'video/mp4',
+                        size: 2048,
+                        uploaded_by: teacher1.id,
+                    },
+                ],
+            },
         },
     });
 
-    const assignment2 = await prisma.assignment.create({
+    const content2 = await prisma.content.create({
         data: {
-            title: 'Newton’s Laws',
-            description: 'Write a report on Newton’s Laws of Motion',
-            due_date: new Date('2026-03-20'),
+            title: 'Lesson 1: Newton’s Laws',
+            description: 'An introduction to Newton’s Laws of Motion.',
+            urls: [
+                'https://example.com/newton-video',
+                'https://example.com/newton-notes',
+            ],
             class: { connect: { id: class2.id } },
-        },
-    });
-
-    const assignment3 = await prisma.assignment.create({
-        data: {
-            title: 'Periodic Table Quiz',
-            description: 'Answer 20 questions about the periodic table',
-            due_date: new Date('2026-03-25'),
-            class: { connect: { id: class3.id } },
-        },
-    });
-
-    // Create Submissions
-    await prisma.submission.create({
-        data: {
-            content: 'Answers to algebra problems...',
-            submitted_at: new Date(),
-            grade: 85,
-            feedback: 'Good work!',
-            assignment: { connect: { id: assignment1.id } },
-            student: { connect: { id: student1.student.id } },
-        },
-    });
-
-    await prisma.submission.create({
-        data: {
-            content: 'Report on Newton’s Laws...',
-            submitted_at: new Date(),
-            grade: null, // No grade yet
-            feedback: null, // No feedback yet
-            assignment: { connect: { id: assignment2.id } },
-            student: { connect: { id: student2.student.id } },
-        },
-    });
-
-    await prisma.submission.create({
-        data: {
-            content: 'Answers to periodic table quiz...',
-            submitted_at: new Date(),
-            grade: 90,
-            feedback: 'Excellent!',
-            assignment: { connect: { id: assignment3.id } },
-            student: { connect: { id: student3.student.id } },
-        },
-    });
-
-    // Create Notifications
-    await prisma.notification.create({
-        data: {
-            title: 'Welcome to Math 101',
-            message: 'Your first assignment has been posted!',
-            created_by: admin1.id,
-            notification_targets: {
+            files: {
                 create: [
                     {
-                        role: 'students',
-                        class: { connect: { id: class1.id } },
+                        url: 'https://example.com/file3.pdf',
+                        filename: 'Newton Notes',
+                        mimetype: 'application/pdf',
+                        size: 512,
+                        uploaded_by: teacher2.id,
                     },
                 ],
             },
         },
     });
 
-    await prisma.notification.create({
-        data: {
-            title: 'Physics Class Update',
-            message: 'Class will be held online tomorrow.',
-            created_by: admin2.id,
-            notification_targets: {
-                create: [
-                    {
-                        role: 'teachers',
-                    },
-                ],
-            },
-        },
-    });
-
-    await prisma.notification.create({
-        data: {
-            title: 'System Maintenance',
-            message: 'The system will be down for maintenance tonight.',
-            created_by: admin3.id,
-            notification_targets: {
-                create: [
-                    {
-                        role: 'all',
-                    },
-                ],
-            },
-        },
-    });
-
-    await prisma.notification.create({
-        data: {
-            title: 'Chemistry Assignment Reminder',
-            message: 'Don’t forget to submit your assignment!',
-            created_by: admin1.id,
-            notification_targets: {
-                create: [
-                    {
-                        class: { connect: { id: class3.id } },
-                    },
-                ],
-            },
-        },
-    });
-
-    console.log('Database has been seeded with sample data!');
+    console.log('Database has been seeded with sample data, including content!');
 }
 
 main()

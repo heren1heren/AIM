@@ -107,8 +107,8 @@ CREATE TABLE "NotificationTarget" (
 -- CreateTable
 CREATE TABLE "Conversation" (
     "id" SERIAL NOT NULL,
-    "type" "ConversationType" NOT NULL DEFAULT 'group',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "type" "ConversationType" NOT NULL DEFAULT 'group',
 
     CONSTRAINT "Conversation_pkey" PRIMARY KEY ("id")
 );
@@ -146,6 +146,7 @@ CREATE TABLE "File" (
     "assignment_id" INTEGER,
     "class_id" INTEGER,
     "notification_id" INTEGER,
+    "content_id" INTEGER,
 
     CONSTRAINT "File_pkey" PRIMARY KEY ("id")
 );
@@ -163,6 +164,19 @@ CREATE TABLE "Attendance" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Attendance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Content" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "urls" TEXT[],
+    "class_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Content_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -238,6 +252,9 @@ ALTER TABLE "File" ADD CONSTRAINT "File_class_id_fkey" FOREIGN KEY ("class_id") 
 ALTER TABLE "File" ADD CONSTRAINT "File_notification_id_fkey" FOREIGN KEY ("notification_id") REFERENCES "Notification"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "File" ADD CONSTRAINT "File_content_id_fkey" FOREIGN KEY ("content_id") REFERENCES "Content"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_student_id_fkey" FOREIGN KEY ("student_id") REFERENCES "Student"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -245,3 +262,6 @@ ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_class_id_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_marked_by_fkey" FOREIGN KEY ("marked_by") REFERENCES "Teacher"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Content" ADD CONSTRAINT "Content_class_id_fkey" FOREIGN KEY ("class_id") REFERENCES "Class"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

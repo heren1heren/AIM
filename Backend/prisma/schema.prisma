@@ -25,7 +25,7 @@ model User {
   student       Student?      @relation("StudentUser")
   notifications Notification[] @relation("CreatedNotifications")
   conversation_participants ConversationParticipant[]
-  messages      Message[]     @relation("SenderMessages")
+  messages      Message[]     @relation("SenderMessages") // Relation to Message
   files         File[]        @relation("UploadedFiles")
 }
 
@@ -65,6 +65,7 @@ model Class {
   notification_targets NotificationTarget[]
   files       File[]
   attendances Attendance[]
+  contents    Content[]   // Add this field to establish the relationship with Content
 }
 
 model Assignment {
@@ -118,26 +119,20 @@ model NotificationTarget {
   class          Class?       @relation(fields: [class_id], references: [id])
 }
 
-enum ConversationType {
-  private
-  group
-  class
-}
-
 model Conversation {
-  id          Int                     @id @default(autoincrement())
-  type        ConversationType        @default(group)
-  created_at  DateTime                @default(now())
-  participants ConversationParticipant[]
-  messages    Message[]
+  id             Int                     @id @default(autoincrement())
+  created_at     DateTime                @default(now())
+  type           ConversationType        @default(group) // Enum for conversation type
+  participants   ConversationParticipant[] // Relation to participants
+  messages       Message[]               // Relation to messages
 }
 
 model ConversationParticipant {
   id             Int          @id @default(autoincrement())
   conversation_id Int
   user_id        Int
-  conversation   Conversation  @relation(fields: [conversation_id], references: [id])
-  user           User          @relation(fields: [user_id], references: [id])
+  conversation   Conversation  @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
+  user           User          @relation(fields: [user_id], references: [id]) // Relation to User
 }
 
 model Message {
@@ -146,8 +141,14 @@ model Message {
   sender_id      Int
   content        String?
   created_at     DateTime     @default(now())
-  conversation   Conversation @relation(fields: [conversation_id], references: [id])
-  sender         User         @relation("SenderMessages", fields: [sender_id], references: [id])
+  conversation   Conversation @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
+  sender         User         @relation("SenderMessages", fields: [sender_id], references: [id]) // Relation to User
+}
+
+enum ConversationType {
+  private
+  group
+  class
 }
 
 model File {
@@ -162,11 +163,13 @@ model File {
   assignment_id  Int?
   class_id       Int?
   notification_id Int?
+  content_id     Int?         // Foreign key to Content model
   uploader       User         @relation("UploadedFiles", fields: [uploaded_by], references: [id])
   submission     Submission?  @relation(fields: [submission_id], references: [id])
   assignment     Assignment?  @relation(fields: [assignment_id], references: [id])
   class          Class?       @relation(fields: [class_id], references: [id])
   notification   Notification? @relation(fields: [notification_id], references: [id])
+  content        Content?     @relation(fields: [content_id], references: [id]) // Add this field
 }
 
 model Attendance {
@@ -190,4 +193,17 @@ enum AttendanceStatus {
   ABSENT
   LATE
   EXCUSED
+}
+
+model Content {
+  id          Int      @id @default(autoincrement())
+  title       String   // Title of the content
+  description String?  // Optional description of the content
+  urls        String[] // Array of URLs for external resources
+  class_id    Int      // Foreign key to the Class model
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  class       Class    @relation(fields: [class_id], references: [id]) // Relation to Class
+  files       File[]   // Relation to File model
 }
