@@ -2,6 +2,7 @@ import express from "express";
 import http from "http";
 import passport from "passport";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 import initPassport from "./config/passport.js";
 import authRoutes from "./routes/auth.js";
@@ -11,6 +12,8 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+const prisma = new PrismaClient();
 
 // Passport setup
 initPassport(passport);

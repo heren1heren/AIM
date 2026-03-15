@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model User {
+  id            Int           @id @default(autoincrement())
+  name          String?
+  username      String        @unique
+  password_hash String
+  role          Role
+  created_at    DateTime      @default(now())
+  admin         Admin?        @relation("AdminUser")
+  teacher       Teacher?      @relation("TeacherUser")
+  student       Student?      @relation("StudentUser")
+  notifications Notification[] @relation("CreatedNotifications")
+  conversation_participants ConversationParticipant[]
+  messages      Message[]     @relation("SenderMessages")
+  files         File[]        @relation("UploadedFiles")
+}
+
+model Admin {
+  id      Int  @id @default(autoincrement())
+  user_id Int  @unique
+  user    User @relation("AdminUser", fields: [user_id], references: [id])
+}
+
+model Teacher {
+  id                  Int          @id @default(autoincrement())
+  user_id             Int          @unique
+  user                User         @relation("TeacherUser", fields: [user_id], references: [id])
+  classes             Class[]
+  marked_attendances  Attendance[]
+}
+
+model Student {
+  id      Int     @id @default(autoincrement())
+  user_id Int     @unique
+  user    User    @relation("StudentUser", fields: [user_id], references: [id])
+  class   Class?  @relation(fields: [class_id], references: [id])
+  class_id Int?
+  submissions Submission[]
+  attendances Attendance[]
+}
+
+model Class {
+  id          Int         @id @default(autoincrement())
+  name        String?
+  description String?
+  teacher_id  Int
+  created_at  DateTime    @default(now())
+  teacher     Teacher     @relation(fields: [teacher_id], references: [id])
+  students    Student[]
+  assignments Assignment[]
+  notification_targets NotificationTarget[]
+  files       File[]
+  attendances Attendance[]
+}
+
+model Assignment {
+  id          Int        @id @default(autoincrement())
+  class_id    Int
+  title       String?
+  description String?
+  due_date    DateTime?
+  created_at  DateTime   @default(now())
+  class       Class      @relation(fields: [class_id], references: [id])
+  submissions Submission[]
+  files       File[]
+}
+
+model Submission {
+  id           Int        @id @default(autoincrement())
+  assignment_id Int
+  student_id   Int
+  content      String?
+  submitted_at DateTime   @default(now())
+  grade        Int?
+  feedback     String?
+  assignment   Assignment @relation(fields: [assignment_id], references: [id])
+  student      Student    @relation(fields: [student_id], references: [id])
+  files        File[]
+}
+
+model Notification {
+  id          Int                @id @default(autoincrement())
+  title       String?
+  message     String?
+  created_by  Int
+  created_at  DateTime           @default(now())
+  creator     User               @relation("CreatedNotifications", fields: [created_by], references: [id])
+  notification_targets NotificationTarget[]
+  files       File[]
+}
+
+enum NotificationRole {
+  all
+  students
+  teachers
+}
+
+model NotificationTarget {
+  id             Int         @id @default(autoincrement())
+  notification_id Int
+  class_id       Int?
+  role           NotificationRole?
+  notification   Notification @relation(fields: [notification_id], references: [id])
+  class          Class?       @relation(fields: [class_id], references: [id])
+}
+
+enum ConversationType {
+  private
+  group
+  class
+}
+
+model Conversation {
+  id          Int                     @id @default(autoincrement())
+  type        ConversationType        @default(group)
+  created_at  DateTime                @default(now())
+  participants ConversationParticipant[]
+  messages    Message[]
+}
+
+model ConversationParticipant {
+  id             Int          @id @default(autoincrement())
+  conversation_id Int
+  user_id        Int
+  conversation   Conversation  @relation(fields: [conversation_id], references: [id])
+  user           User          @relation(fields: [user_id], references: [id])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversation_id Int
+  sender_id      Int
+  content        String?
+  created_at     DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversation_id], references: [id])
+  sender         User         @relation("SenderMessages", fields: [sender_id], references: [id])
+}
+
+model File {
+  id             Int          @id @default(autoincrement())
+  url            String
+  filename       String?
+  mimetype       String?
+  size           Int?
+  uploaded_by    Int
+  created_at     DateTime     @default(now())
+  submission_id  Int?
+  assignment_id  Int?
+  class_id       Int?
+  notification_id Int?
+  uploader       User         @relation("UploadedFiles", fields: [uploaded_by], references: [id])
+  submission     Submission?  @relation(fields: [submission_id], references: [id])
+  assignment     Assignment?  @relation(fields: [assignment_id], references: [id])
+  class          Class?       @relation(fields: [class_id], references: [id])
+  notification   Notification? @relation(fields: [notification_id], references: [id])
+}
+
+model Attendance {
+  id          Int      @id @default(autoincrement())
+  student_id  Int      
+  class_id    Int      
+  date        DateTime 
+  status      AttendanceStatus @default(PRESENT) 
+  comment     String? 
+  reason      String?
+  marked_by   Int?   
+  created_at  DateTime @default(now())
+
+  student     Student  @relation(fields: [student_id], references: [id])
+  class       Class    @relation(fields: [class_id], references: [id])
+  marker      Teacher? @relation(fields: [marked_by], references: [id])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
