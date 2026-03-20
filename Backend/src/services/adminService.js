@@ -4,9 +4,10 @@ const prisma = new PrismaClient();
 
 // Get all admins
 const getAllAdmins = async () => {
-    return await prisma.user.findMany({
-        where: { role: 'admin' }, // Ensure only users with the 'admin' role are fetched
-        include: { admin: true }, // Include admin-specific details
+    return await prisma.admin.findMany({
+        include: {
+            user: true, // Include the related user data
+        },
     });
 };
 

@@ -16,7 +16,7 @@ import conversationParticipantRoutes from "./routes/conversationParticipants.js"
 import fileRoutes from "./routes/files.js";
 import notificationRoutes from "./routes/notifications.js";
 import notificationTargetRoutes from "./routes/notificationTargets.js";
-import roleRoutes from "./routes/roles.js";
+
 import studentRoutes from "./routes/students.js";
 import submissionRoutes from "./routes/submissions.js";
 import teacherRoutes from "./routes/teacher.js";
@@ -47,7 +47,7 @@ app.use("/conversation-participants", conversationParticipantRoutes);
 app.use("/files", fileRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/notification-targets", notificationTargetRoutes);
-app.use("/roles", roleRoutes);
+
 app.use("/students", studentRoutes);
 app.use("/submissions", submissionRoutes);
 app.use("/teachers", teacherRoutes);
@@ -70,5 +70,5 @@ const server = http.createServer(app);
 initWebSocket(server);
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

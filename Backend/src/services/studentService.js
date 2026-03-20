@@ -4,17 +4,21 @@ const prisma = new PrismaClient();
 
 // Get all students
 const getAllStudents = async () => {
-    return await prisma.user.findMany({
-        where: { role: 'student' },
-        include: { student: true },
+    return await prisma.student.findMany({
+        include: {
+            user: true, // Include the related user data
+        },
     });
 };
 
 // Get a student by ID
 const getStudentById = async (id) => {
-    return await prisma.user.findUnique({
-        where: { id: parseInt(id) },
-        include: { student: true },
+    return await prisma.student.findUnique({
+        where: { user_id: parseInt(id) }, // Query the student table using user_id
+        include: {
+            user: true,
+            class: true,// Include the related user data
+        },
     });
 };
 

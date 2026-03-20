@@ -3,10 +3,11 @@ import classController from '../controllers/classController.js';
 
 const router = express.Router();
 
-router.post('/', classController.createClass); // Create a class
-router.get('/', classController.getAllClasses); // Get all classes
-router.get('/:id', classController.getClassById); // Get a class by ID
-router.put('/:id', classController.updateClass); // Update a class
-router.delete('/:id', classController.deleteClass); // Delete a class
+router.post('/', classController.createClass);
+router.get('/', classController.getAllClasses);
+router.get('/:id', classController.getClassById);
+router.put('/:id', classController.updateClass);
+router.delete('/:id', classController.deleteClass);
+router.put('/transfer', classController.transferDataClass);
 
 export default router;

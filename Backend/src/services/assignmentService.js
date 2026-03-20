@@ -3,31 +3,58 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const createAssignment = async (data) => {
-    return await prisma.assignment.create({ data });
+    try {
+        return await prisma.assignment.create({ data });
+    } catch (error) {
+        console.error('Error creating assignment:', error);
+        throw new Error('Failed to create assignment');
+    }
 };
 
 const getAllAssignments = async () => {
-    return await prisma.assignment.findMany({
-        include: { class: true },
-    });
+    try {
+        return await prisma.assignment.findMany({
+            include: { class: true },
+        });
+    } catch (error) {
+        console.error('Error fetching all assignments:', error);
+        throw new Error('Failed to fetch assignments');
+    }
 };
 
 const getAssignmentById = async (id) => {
-    return await prisma.assignment.findUnique({
-        where: { id: parseInt(id) },
-        include: { class: true },
-    });
+    try {
+        return await prisma.assignment.findUnique({
+            where: { id: parseInt(id) },
+            include: { class: true },
+        });
+    } catch (error) {
+        console.error(`Error fetching assignment with ID ${id}:`, error);
+        throw new Error('Failed to fetch assignment');
+    }
 };
 
 const updateAssignment = async (id, data) => {
-    return await prisma.assignment.update({
-        where: { id: parseInt(id) },
-        data,
-    });
+    try {
+        return await prisma.assignment.update({
+            where: { id: parseInt(id) },
+            data,
+        });
+    } catch (error) {
+        console.error(`Error updating assignment with ID ${id}:`, error);
+        throw new Error('Failed to update assignment');
+    }
 };
 
 const deleteAssignment = async (id) => {
-    return await prisma.assignment.delete({ where: { id: parseInt(id) } });
+    try {
+        return await prisma.assignment.delete({
+            where: { id: parseInt(id) },
+        });
+    } catch (error) {
+        console.error(`Error deleting assignment with ID ${id}:`, error);
+        throw new Error('Failed to delete assignment');
+    }
 };
 
 export default {

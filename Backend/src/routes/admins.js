@@ -9,12 +9,12 @@ const router = express.Router();
 router.get('/', getAllAdmins);
 
 // Route to create a new admin
-router.post('/', createAdmin);
+// router.post('/', createAdmin);
 
 // Route to update an admin by ID
-router.put('/:id', updateAdmin);
+// router.put('/:id', updateAdmin);
 
 // Route to delete an admin by ID
-router.delete('/:id', deleteAdmin);
+// router.delete('/:id', deleteAdmin);
 
 export default router;

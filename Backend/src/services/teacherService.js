@@ -13,7 +13,7 @@ const getAllTeachers = async () => {
 // Get a teacher by ID
 const getTeacherById = async (id) => {
     return await prisma.user.findUnique({
-        where: { id: parseInt(id) },
+        where: { user_id: parseInt(id) },
         include: { teacher: true },
     });
 };

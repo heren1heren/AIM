@@ -1,6 +1,14 @@
 import { validationResult, body, param } from 'express-validator';
 import assignmentService from '../services/assignmentService.js';
 
+// Utility function to handle validation errors
+const handleValidationErrors = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+};
+
 // Create an assignment
 const createAssignment = [
     // Validation rules
@@ -8,28 +16,26 @@ const createAssignment = [
     body('description').optional().isString().withMessage('Description must be a string'),
     body('class_id').isInt().withMessage('Class ID must be a valid integer'),
     body('due_date').isISO8601().withMessage('Due date must be a valid ISO 8601 date'),
+    body('assignedDate').isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
-        const { title, description, class_id, due_date } = req.body;
+        const { title, description, class_id, due_date, assignedDate } = req.body;
 
         try {
             const assignment = await assignmentService.createAssignment({
                 title,
                 description,
                 class_id,
-                due_date,
+                due_date: new Date(due_date),
+                assignedDate: new Date(assignedDate),
             });
 
             res.status(201).json(assignment);
         } catch (error) {
-            console.error(error);
+            console.error('Error creating assignment:', error);
             res.status(500).json({ error: 'Failed to create assignment' });
         }
     },
@@ -41,7 +47,7 @@ const getAllAssignments = async (req, res) => {
         const assignments = await assignmentService.getAllAssignments();
         res.status(200).json(assignments);
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching assignments:', error);
         res.status(500).json({ error: 'Failed to fetch assignments' });
     }
 };
@@ -53,11 +59,7 @@ const getAssignmentById = [
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
 
@@ -69,7 +71,7 @@ const getAssignmentById = [
 
             res.status(200).json(assignment);
         } catch (error) {
-            console.error(error);
+            console.error('Error fetching assignment:', error);
             res.status(500).json({ error: 'Failed to fetch assignment' });
         }
     },
@@ -82,28 +84,26 @@ const updateAssignment = [
     body('title').optional().isString().withMessage('Title must be a string'),
     body('description').optional().isString().withMessage('Description must be a string'),
     body('due_date').optional().isISO8601().withMessage('Due date must be a valid ISO 8601 date'),
+    body('assignedDate').optional().isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
-        const { title, description, due_date } = req.body;
+        const { title, description, due_date, assignedDate } = req.body;
 
         try {
             const updatedAssignment = await assignmentService.updateAssignment(parseInt(id), {
                 title,
                 description,
-                due_date,
+                due_date: due_date ? new Date(due_date) : undefined,
+                assignedDate: assignedDate ? new Date(assignedDate) : undefined,
             });
 
             res.status(200).json(updatedAssignment);
         } catch (error) {
-            console.error(error);
+            console.error('Error updating assignment:', error);
             res.status(500).json({ error: 'Failed to update assignment' });
         }
     },
@@ -116,11 +116,7 @@ const deleteAssignment = [
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
 
@@ -128,7 +124,7 @@ const deleteAssignment = [
             await assignmentService.deleteAssignment(parseInt(id));
             res.status(204).send();
         } catch (error) {
-            console.error(error);
+            console.error('Error deleting assignment:', error);
             res.status(500).json({ error: 'Failed to delete assignment' });
         }
     },

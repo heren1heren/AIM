@@ -18,7 +18,6 @@ model User {
   name          String?
   username      String        @unique
   password_hash String
-  role          Role
   created_at    DateTime      @default(now())
   admin         Admin?        @relation("AdminUser")
   teacher       Teacher?      @relation("TeacherUser")
@@ -46,6 +45,7 @@ model Admin {
   id      Int  @id @default(autoincrement())
   user_id Int  @unique
   user    User @relation("AdminUser", fields: [user_id], references: [id])
+  
 }
 
 model Teacher {
@@ -71,14 +71,16 @@ model Class {
   name        String?
   description String?
   teacher_id  Int
-  created_at  DateTime    @default(now())
-  teacher     Teacher     @relation(fields: [teacher_id], references: [id])
+  start_date  DateTime     // Start date of the class
+  end_date    DateTime     // End date of the class
+  created_at  DateTime     @default(now())
+  teacher     Teacher      @relation(fields: [teacher_id], references: [id])
   students    Student[]
   assignments Assignment[]
   notification_targets NotificationTarget[]
   files       File[]
   attendances Attendance[]
-  contents    Content[]   // Add this field to establish the relationship with Content
+  contents    Content[]    // Relation to Content
 }
 
 model Assignment {
@@ -87,8 +89,9 @@ model Assignment {
   title       String?
   description String?
   due_date    DateTime?
-  created_at  DateTime   @default(now())
-  class       Class      @relation(fields: [class_id], references: [id])
+  assignedDate DateTime   // Date when the assignment is assigned
+  created_at  DateTime    @default(now())
+  class       Class       @relation(fields: [class_id], references: [id])
   submissions Submission[]
   files       File[]
 }
@@ -214,6 +217,8 @@ model Content {
   description String?  // Optional description of the content
   urls        String[] // Array of URLs for external resources
   class_id    Int      // Foreign key to the Class model
+  
+  assignedDate DateTime // Date when the content is assigned
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 

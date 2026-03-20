@@ -6,7 +6,9 @@ const createUser = [
     // Validation rules
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
     body('password_hash').isString().notEmpty().withMessage('Password hash is required and must be a string'),
-    body('role').isIn(['admin', 'teacher', 'student']).withMessage('Role must be one of: admin, teacher, student'),
+    body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
+    body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
+    body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
     body('profile').optional().isObject().withMessage('Profile must be an object'),
     body('profile.nickname').optional().isString().withMessage('Nickname must be a string'),
     body('profile.avatar').optional().isString().withMessage('Avatar must be a string'),
@@ -20,10 +22,17 @@ const createUser = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { username, password_hash, role, profile } = req.body;
+        const { username, password_hash, isAdmin, isTeacher, isStudent, profile } = req.body;
 
         try {
-            const user = await userService.createUser({ username, password_hash, role, profile });
+            const user = await userService.createUser({
+                username,
+                password_hash,
+                isAdmin,
+                isTeacher,
+                isStudent,
+                profile,
+            });
             res.status(201).json(user);
         } catch (error) {
             console.error('Error creating user:', error);
@@ -77,7 +86,8 @@ const updateUser = [
     param('id').isInt().withMessage('User ID must be a valid integer'),
     body('username').optional().isString().withMessage('Username must be a string'),
     body('password_hash').optional().isString().withMessage('Password hash must be a string'),
-    body('role').optional().isIn(['admin', 'teacher', 'student']).withMessage('Role must be one of: admin, teacher, student'),
+    body('addRole').optional().isIn(['admin', 'teacher']).withMessage('addRole must be one of: admin, teacher'),
+    body('removeRole').optional().isIn(['admin', 'teacher']).withMessage('removeRole must be one of: admin, teacher'),
 
     // Controller logic
     async (req, res) => {
@@ -88,12 +98,13 @@ const updateUser = [
         }
 
         const { id } = req.params;
+        const { addRole, removeRole, ...data } = req.body;
 
         try {
-            const updatedUser = await userService.updateUser(parseInt(id), req.body);
+            const updatedUser = await userService.updateUser(parseInt(id), { addRole, removeRole, ...data });
             res.status(200).json(updatedUser);
         } catch (error) {
-            console.error(error);
+            console.error('Error updating user:', error);
             res.status(500).json({ error: 'Failed to update user' });
         }
     },

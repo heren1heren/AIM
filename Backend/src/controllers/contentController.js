@@ -1,36 +1,42 @@
 import { validationResult, body, param } from 'express-validator';
 import contentService from '../services/contentService.js';
 
+// Utility function to handle validation errors
+const handleValidationErrors = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+};
+
 // Create content
 const createContent = [
     // Validation rules
     body('title').isString().notEmpty().withMessage('Title is required'),
-    body('class_id').isInt().withMessage('Class ID must be a valid integer'),
     body('description').optional().isString().withMessage('Description must be a string'),
-    body('urls').optional().isArray().withMessage('URLs must be an array of strings'),
+    body('urls').isArray().withMessage('URLs must be an array'),
+    body('class_id').isInt().withMessage('Class ID must be a valid integer'),
+    body('assignedDate').isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
-        const { title, description, urls, class_id } = req.body;
+        const { title, description, urls, class_id, assignedDate } = req.body;
 
         try {
-            const content = await contentService.createContent({
+            const newContent = await contentService.createContent({
                 title,
                 description,
                 urls,
                 class_id,
+                assignedDate: new Date(assignedDate),
             });
 
-            res.status(201).json(content);
+            res.status(201).json(newContent);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to create content' });
+            console.error('Error creating content:', error);
+            res.status(500).json({ error: error.message });
         }
     },
 ];
@@ -41,8 +47,8 @@ const getAllContent = async (req, res) => {
         const contents = await contentService.getAllContent();
         res.status(200).json(contents);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to fetch content' });
+        console.error('Error fetching content:', error);
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -53,11 +59,7 @@ const getContentById = [
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
 
@@ -69,8 +71,8 @@ const getContentById = [
 
             res.status(200).json(content);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to fetch content' });
+            console.error('Error fetching content:', error);
+            res.status(500).json({ error: error.message });
         }
     },
 ];
@@ -81,30 +83,30 @@ const updateContent = [
     param('id').isInt().withMessage('Content ID must be a valid integer'),
     body('title').optional().isString().withMessage('Title must be a string'),
     body('description').optional().isString().withMessage('Description must be a string'),
-    body('urls').optional().isArray().withMessage('URLs must be an array of strings'),
+    body('urls').optional().isArray().withMessage('URLs must be an array'),
+    body('class_id').optional().isInt().withMessage('Class ID must be a valid integer'),
+    body('assignedDate').optional().isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
-        const { title, description, urls } = req.body;
+        const { title, description, urls, class_id, assignedDate } = req.body;
 
         try {
             const updatedContent = await contentService.updateContent(parseInt(id), {
                 title,
                 description,
                 urls,
+                class_id,
+                assignedDate: assignedDate ? new Date(assignedDate) : undefined,
             });
 
             res.status(200).json(updatedContent);
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to update content' });
+            console.error('Error updating content:', error);
+            res.status(500).json({ error: error.message });
         }
     },
 ];
@@ -116,11 +118,7 @@ const deleteContent = [
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+        handleValidationErrors(req, res);
 
         const { id } = req.params;
 
@@ -128,8 +126,8 @@ const deleteContent = [
             await contentService.deleteContent(parseInt(id));
             res.status(204).send();
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to delete content' });
+            console.error('Error deleting content:', error);
+            res.status(500).json({ error: error.message });
         }
     },
 ];
