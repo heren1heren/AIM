@@ -23,10 +23,10 @@ model User {
   teacher       Teacher?      @relation("TeacherUser")
   student       Student?      @relation("StudentUser")
   notifications Notification[] @relation("CreatedNotifications")
-  conversation_participants ConversationParticipant[]
   messages      Message[]     @relation("SenderMessages") 
   files         File[]        @relation("UploadedFiles")
   profile       UserProfile?  @relation
+  conversations Conversation[] @relation("UserConversations") // Many-to-many relation with Conversation
 }
 
 model UserProfile {
@@ -111,32 +111,32 @@ model Submission {
 }
 
 model Notification {
-  id          Int         @id @default(autoincrement())
-  title       String?
-  message     String?
-  created_by  Int
-  created_at  DateTime    @default(now())
-  class_id    Int?        // Foreign key to Class (nullable if notification is global)
-  
-  creator     User        @relation("CreatedNotifications", fields: [created_by], references: [id])
-  class       Class?      @relation(fields: [class_id], references: [id]) // Relation to Class
-  files       File[]      // Relation to File model
+  id              Int         @id @default(autoincrement())
+  title           String?
+  message         String?
+  created_by      Int
+  created_at      DateTime    @default(now())
+  class_id        Int?        
+  is_for_students Boolean      @default(false) 
+  is_for_teachers Boolean      @default(false) 
+  is_global       Boolean      @default(false) 
+
+  creator         User        @relation("CreatedNotifications", fields: [created_by], references: [id])
+  class           Class?      @relation(fields: [class_id], references: [id]) // Relation to Class
+  files           File[]      // Relation to File model
 }
 
+enum ConversationType {
+  private
+  group
+  class
+}
 model Conversation {
   id             Int                     @id @default(autoincrement())
   created_at     DateTime                @default(now())
   type           ConversationType        @default(group) // Enum for conversation type
-  participants   ConversationParticipant[] // Relation to participants
+  users          User[]                  @relation("UserConversations") // Many-to-many relation with User
   messages       Message[]               // Relation to messages
-}
-
-model ConversationParticipant {
-  id             Int          @id @default(autoincrement())
-  conversation_id Int
-  user_id        Int
-  conversation   Conversation  @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
-  user           User          @relation(fields: [user_id], references: [id]) // Relation to User
 }
 
 model Message {
@@ -149,11 +149,7 @@ model Message {
   sender         User         @relation("SenderMessages", fields: [sender_id], references: [id]) // Relation to User
 }
 
-enum ConversationType {
-  private
-  group
-  class
-}
+
 
 model File {
   id             Int          @id @default(autoincrement())

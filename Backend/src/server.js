@@ -12,7 +12,7 @@ import attendanceRoutes from "./routes/attendance.js";
 import classRoutes from "./routes/classes.js";
 import contentRoutes from "./routes/contents.js";
 import conversationRoutes from "./routes/conversations.js";
-import conversationParticipantRoutes from "./routes/conversationParticipants.js";
+
 import fileRoutes from "./routes/files.js";
 import notificationRoutes from "./routes/notifications.js";
 
@@ -42,7 +42,6 @@ app.use("/attendance", attendanceRoutes);
 app.use("/classes", classRoutes);
 app.use("/contents", contentRoutes);
 app.use("/conversations", conversationRoutes);
-app.use("/conversation-participants", conversationParticipantRoutes);
 app.use("/files", fileRoutes);
 app.use("/notifications", notificationRoutes);
 
