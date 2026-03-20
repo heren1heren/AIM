@@ -74,10 +74,11 @@ model Class {
   start_date  DateTime     // Start date of the class
   end_date    DateTime     // End date of the class
   created_at  DateTime     @default(now())
+
   teacher     Teacher      @relation(fields: [teacher_id], references: [id])
   students    Student[]
   assignments Assignment[]
-  notification_targets NotificationTarget[]
+  notification Notification[] // Relation to Notification
   files       File[]
   attendances Attendance[]
   contents    Content[]    // Relation to Content
@@ -110,29 +111,16 @@ model Submission {
 }
 
 model Notification {
-  id          Int                @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   title       String?
   message     String?
   created_by  Int
-  created_at  DateTime           @default(now())
-  creator     User               @relation("CreatedNotifications", fields: [created_by], references: [id])
-  notification_targets NotificationTarget[]
-  files       File[]
-}
-
-enum NotificationRole {
-  all
-  students
-  teachers
-}
-
-model NotificationTarget {
-  id             Int         @id @default(autoincrement())
-  notification_id Int
-  class_id       Int?
-  role           NotificationRole?
-  notification   Notification @relation(fields: [notification_id], references: [id])
-  class          Class?       @relation(fields: [class_id], references: [id])
+  created_at  DateTime    @default(now())
+  class_id    Int?        // Foreign key to Class (nullable if notification is global)
+  
+  creator     User        @relation("CreatedNotifications", fields: [created_by], references: [id])
+  class       Class?      @relation(fields: [class_id], references: [id]) // Relation to Class
+  files       File[]      // Relation to File model
 }
 
 model Conversation {
@@ -179,13 +167,14 @@ model File {
   assignment_id  Int?
   class_id       Int?
   notification_id Int?
-  content_id     Int?         // Foreign key to Content model
+  content_id     Int?
+
   uploader       User         @relation("UploadedFiles", fields: [uploaded_by], references: [id])
   submission     Submission?  @relation(fields: [submission_id], references: [id])
   assignment     Assignment?  @relation(fields: [assignment_id], references: [id])
   class          Class?       @relation(fields: [class_id], references: [id])
-  notification   Notification? @relation(fields: [notification_id], references: [id])
-  content        Content?     @relation(fields: [content_id], references: [id]) // Add this field
+  notification   Notification? @relation(fields: [notification_id], references: [id]) // Relation to Notification
+  content        Content?     @relation(fields: [content_id], references: [id])
 }
 
 model Attendance {
@@ -217,7 +206,7 @@ model Content {
   description String?  // Optional description of the content
   urls        String[] // Array of URLs for external resources
   class_id    Int      // Foreign key to the Class model
-  
+
   assignedDate DateTime // Date when the content is assigned
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt

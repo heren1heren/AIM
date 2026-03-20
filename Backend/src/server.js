@@ -15,7 +15,6 @@ import conversationRoutes from "./routes/conversations.js";
 import conversationParticipantRoutes from "./routes/conversationParticipants.js";
 import fileRoutes from "./routes/files.js";
 import notificationRoutes from "./routes/notifications.js";
-import notificationTargetRoutes from "./routes/notificationTargets.js";
 
 import studentRoutes from "./routes/students.js";
 import submissionRoutes from "./routes/submissions.js";
@@ -46,7 +45,6 @@ app.use("/conversations", conversationRoutes);
 app.use("/conversation-participants", conversationParticipantRoutes);
 app.use("/files", fileRoutes);
 app.use("/notifications", notificationRoutes);
-app.use("/notification-targets", notificationTargetRoutes);
 
 app.use("/students", studentRoutes);
 app.use("/submissions", submissionRoutes);
