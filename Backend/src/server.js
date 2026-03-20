@@ -2,9 +2,26 @@ import express from "express";
 import http from "http";
 import passport from "passport";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 import initPassport from "./config/passport.js";
 import authRoutes from "./routes/auth.js";
+import adminRoutes from "./routes/admins.js";
+import assignmentRoutes from "./routes/assignments.js";
+import attendanceRoutes from "./routes/attendance.js";
+import classRoutes from "./routes/classes.js";
+import contentRoutes from "./routes/contents.js";
+import conversationRoutes from "./routes/conversations.js";
+import conversationParticipantRoutes from "./routes/conversationParticipants.js";
+import fileRoutes from "./routes/files.js";
+import notificationRoutes from "./routes/notifications.js";
+import notificationTargetRoutes from "./routes/notificationTargets.js";
+import roleRoutes from "./routes/roles.js";
+import studentRoutes from "./routes/students.js";
+import submissionRoutes from "./routes/submissions.js";
+import teacherRoutes from "./routes/teacher.js";
+import userRoutes from "./routes/users.js";
+import userProfileRoutes from "./routes/userProfiles.js";
 import initWebSocket from "./sockets/index.js";
 
 dotenv.config();
@@ -12,14 +29,32 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Passport setup
+const prisma = new PrismaClient();
+
+// Initialize Passport
 initPassport(passport);
 app.use(passport.initialize());
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/admins", adminRoutes);
+app.use("/assignments", assignmentRoutes);
+app.use("/attendance", attendanceRoutes);
+app.use("/classes", classRoutes);
+app.use("/contents", contentRoutes);
+app.use("/conversations", conversationRoutes);
+app.use("/conversation-participants", conversationParticipantRoutes);
+app.use("/files", fileRoutes);
+app.use("/notifications", notificationRoutes);
+app.use("/notification-targets", notificationTargetRoutes);
+app.use("/roles", roleRoutes);
+app.use("/students", studentRoutes);
+app.use("/submissions", submissionRoutes);
+app.use("/teachers", teacherRoutes);
+app.use("/users", userRoutes);
+app.use("/user-profiles", userProfileRoutes);
 
-// Protected example route
+// Protected route example
 app.get(
     "/protected",
     passport.authenticate("jwt", { session: false }),
