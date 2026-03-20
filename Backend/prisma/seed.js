@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-
     console.log('Seeding new data...');
 
     // Create Admin Users
@@ -14,6 +13,13 @@ async function main() {
             password_hash: 'hashed_password_admin1',
             role: 'admin',
             admin: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'AdminOne',
+                    avatar: 'https://example.com/avatar-admin1.png',
+                    bias: 'neutral',
+                },
+            },
         },
     });
 
@@ -24,6 +30,13 @@ async function main() {
             password_hash: 'hashed_password_admin2',
             role: 'admin',
             admin: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'AdminTwo',
+                    avatar: 'https://example.com/avatar-admin2.png',
+                    bias: 'neutral',
+                },
+            },
         },
     });
 
@@ -34,6 +47,13 @@ async function main() {
             password_hash: 'hashed_password_admin3',
             role: 'admin',
             admin: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'AdminThree',
+                    avatar: 'https://example.com/avatar-admin3.png',
+                    bias: 'neutral',
+                },
+            },
         },
     });
 
@@ -45,6 +65,13 @@ async function main() {
             password_hash: 'hashed_password_teacher1',
             role: 'teacher',
             teacher: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'TeacherOne',
+                    avatar: 'https://example.com/avatar-teacher1.png',
+                    bias: 'positive',
+                },
+            },
         },
         include: { teacher: true },
     });
@@ -56,6 +83,13 @@ async function main() {
             password_hash: 'hashed_password_teacher2',
             role: 'teacher',
             teacher: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'TeacherTwo',
+                    avatar: 'https://example.com/avatar-teacher2.png',
+                    bias: 'positive',
+                },
+            },
         },
         include: { teacher: true },
     });
@@ -67,6 +101,13 @@ async function main() {
             password_hash: 'hashed_password_teacher3',
             role: 'teacher',
             teacher: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'TeacherThree',
+                    avatar: 'https://example.com/avatar-teacher3.png',
+                    bias: 'positive',
+                },
+            },
         },
         include: { teacher: true },
     });
@@ -79,6 +120,13 @@ async function main() {
             password_hash: 'hashed_password_student1',
             role: 'student',
             student: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'StudentOne',
+                    avatar: 'https://example.com/avatar-student1.png',
+                    bias: 'curious',
+                },
+            },
         },
         include: { student: true },
     });
@@ -90,6 +138,13 @@ async function main() {
             password_hash: 'hashed_password_student2',
             role: 'student',
             student: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'StudentTwo',
+                    avatar: 'https://example.com/avatar-student2.png',
+                    bias: 'curious',
+                },
+            },
         },
         include: { student: true },
     });
@@ -101,6 +156,13 @@ async function main() {
             password_hash: 'hashed_password_student3',
             role: 'student',
             student: { create: {} },
+            profile: {
+                create: {
+                    nickname: 'StudentThree',
+                    avatar: 'https://example.com/avatar-student3.png',
+                    bias: 'curious',
+                },
+            },
         },
         include: { student: true },
     });
