@@ -52,6 +52,50 @@ const getAllAssignments = async (req, res) => {
     }
 };
 
+const getAssignmentsByStudentId = [
+    // Validation rules
+    param('studentId').isInt().withMessage('Student ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { studentId } = req.params;
+
+        try {
+            const assignments = await assignmentService.getAssignmentsByStudentId(parseInt(studentId));
+            res.status(200).json(assignments);
+        } catch (error) {
+            console.error('Error fetching assignments by student ID:', error);
+            res.status(500).json({ error: 'Failed to fetch assignments' });
+        }
+    },
+];
+
+// Get assignments by class ID
+const getAssignmentsByClassId = [
+    // Validation rules
+    param('classId').isInt().withMessage('Class ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        handleValidationErrors(req, res);
+
+        const { classId } = req.params;
+
+        try {
+            const assignments = await assignmentService.getAssignmentsByClassId(parseInt(classId));
+            res.status(200).json(assignments);
+        } catch (error) {
+            console.error('Error fetching assignments by class ID:', error);
+            res.status(500).json({ error: 'Failed to fetch assignments' });
+        }
+    },
+];
+
 // Get an assignment by ID
 const getAssignmentById = [
     // Validation rules
@@ -133,6 +177,8 @@ const deleteAssignment = [
 export default {
     createAssignment,
     getAllAssignments,
+    getAssignmentsByClassId,
+    getAssignmentsByStudentId,
     getAssignmentById,
     updateAssignment,
     deleteAssignment,

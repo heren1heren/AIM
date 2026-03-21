@@ -9,7 +9,8 @@ const markAttendance = [
     body('date').isISO8601().withMessage('Date must be a valid ISO 8601 date'),
     body('status').isString().isIn(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED']).withMessage('Status must be one of: PRESENT, ABSENT, LATE, EXCUSED'),
     body('comment').optional().isString().withMessage('Comment must be a string'),
-    body('reason').optional().isString().withMessage('Reason must be a string'),
+    body('reason').optional({ nullable: true }).isString().withMessage('Reason must be a string'), // Allow null or empty
+
     body('marked_by').optional().isInt().withMessage('Marked by must be a valid teacher ID'),
 
     // Controller logic
@@ -119,9 +120,59 @@ const updateAttendanceById = [
     },
 ];
 
+// Get attendance by class ID
+const getAttendanceByClassId = [
+    // Validation rules
+    param('classId').isInt().withMessage('Class ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { classId } = req.params;
+
+        try {
+            const attendanceRecords = await attendanceService.getAttendanceByClassId(parseInt(classId));
+            res.status(200).json(attendanceRecords);
+        } catch (error) {
+            console.error('Error fetching attendance by class ID:', error);
+            res.status(500).json({ error: 'Failed to fetch attendance records' });
+        }
+    },
+];
+
+// Get attendance by student ID
+const getAttendanceByStudentId = [
+    // Validation rules
+    param('studentId').isInt().withMessage('Student ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { studentId } = req.params;
+
+        try {
+            const attendanceRecords = await attendanceService.getAttendanceByStudentId(parseInt(studentId));
+            res.status(200).json(attendanceRecords);
+        } catch (error) {
+            console.error('Error fetching attendance by student ID:', error);
+            res.status(500).json({ error: 'Failed to fetch attendance records' });
+        }
+    },
+];
+
 export default {
     markAttendance,
     getAllAttendance,
     getAttendanceById,
-    updateAttendanceById, // Ensure this is exported
+    updateAttendanceById,
+    getAttendanceByClassId,
+    getAttendanceByStudentId,
 };

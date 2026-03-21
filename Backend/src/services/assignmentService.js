@@ -21,7 +21,33 @@ const getAllAssignments = async () => {
         throw new Error('Failed to fetch assignments');
     }
 };
+const getAssignmentsByClassId = async (classId) => {
+    return await prisma.assignment.findMany({
+        where: { class_id: parseInt(classId) },
+    });
+};
+const getAssignmentsByStudentId = async (studentId) => {
+    try {
+        // Fetch the class_id for the student
+        const student = await prisma.student.findUnique({
+            where: { id: parseInt(studentId) },
+            select: { class_id: true }, // Only fetch the class_id
+        });
 
+        if (!student) {
+            throw new Error(`Student with ID ${studentId} not found`);
+        }
+
+        // Fetch assignments for the student's class_id
+        return await prisma.assignment.findMany({
+            where: { class_id: student.class_id },
+            include: { class: true }, // Include related class data if needed
+        });
+    } catch (error) {
+        console.error(`Error fetching assignments for student ID ${studentId}:`, error);
+        throw new Error('Failed to fetch assignments');
+    }
+};
 const getAssignmentById = async (id) => {
     try {
         return await prisma.assignment.findUnique({
@@ -59,7 +85,8 @@ const deleteAssignment = async (id) => {
 
 export default {
     createAssignment,
-    getAllAssignments,
+    getAllAssignments, getAssignmentsByClassId,
+    getAssignmentsByStudentId,
     getAssignmentById,
     updateAssignment,
     deleteAssignment,

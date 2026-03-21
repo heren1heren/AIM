@@ -3,10 +3,12 @@ import contentController from '../controllers/contentController.js';
 
 const router = express.Router();
 
-router.post('/', contentController.createContent); // Create content
-router.get('/', contentController.getAllContent); // Get all content
-router.get('/:id', contentController.getContentById); // Get content by ID
-router.put('/:id', contentController.updateContent); // Update content
-router.delete('/:id', contentController.deleteContent); // Delete content
+router.post('/', contentController.createContent);
+router.get('/', contentController.getAllContent);
+router.get('/class/:classId', contentController.getContentsByClassId);
+
+router.get('/:id', contentController.getContentById);
+router.put('/:id', contentController.updateContent);
+router.delete('/:id', contentController.deleteContent);
 
 export default router;

@@ -132,10 +132,32 @@ const deleteContent = [
     },
 ];
 
+// Get contents by class ID
+const getContentsByClassId = [
+    // Validation rules
+    param('classId').isInt().withMessage('Class ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        handleValidationErrors(req, res);
+
+        const { classId } = req.params;
+
+        try {
+            const contents = await contentService.getContentsByClassId(parseInt(classId));
+            res.status(200).json(contents);
+        } catch (error) {
+            console.error('Error fetching contents by class ID:', error);
+            res.status(500).json({ error: 'Failed to fetch contents' });
+        }
+    },
+];
+
 export default {
     createContent,
     getAllContent,
     getContentById,
     updateContent,
     deleteContent,
+    getContentsByClassId, // Export the new controller
 };

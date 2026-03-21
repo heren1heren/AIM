@@ -145,6 +145,7 @@ model Message {
   sender_id      Int
   content        String?
   created_at     DateTime     @default(now())
+   updated_at     DateTime     @updatedAt // Automatically updates on modification
   conversation   Conversation @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
   sender         User         @relation("SenderMessages", fields: [sender_id], references: [id]) // Relation to User
 }

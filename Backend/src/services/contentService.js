@@ -57,10 +57,23 @@ const deleteContent = async (id) => {
     }
 };
 
+const getContentsByClassId = async (classId) => {
+    try {
+        return await prisma.content.findMany({
+            where: { class_id: classId },
+            include: { class: true, files: true }, // Include related data if needed
+        });
+    } catch (error) {
+        console.error(`Error fetching contents for class ID ${classId}:`, error);
+        throw new Error('Failed to fetch contents');
+    }
+};
+
 export default {
     createContent,
     getAllContent,
     getContentById,
     updateContent,
     deleteContent,
+    getContentsByClassId, // Export the new service
 };
