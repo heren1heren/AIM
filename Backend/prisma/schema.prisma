@@ -24,6 +24,7 @@ model User {
   student       Student?      @relation("StudentUser")
   notifications Notification[] @relation("CreatedNotifications")
   messages      Message[]     @relation("SenderMessages") 
+  received_messages  Message[]     @relation("RecipientMessages") // Messa
   files         File[]        @relation("UploadedFiles")
   profile       UserProfile?  @relation
   conversations Conversation[] @relation("UserConversations") // Many-to-many relation with Conversation
@@ -143,11 +144,13 @@ model Message {
   id             Int          @id @default(autoincrement())
   conversation_id Int
   sender_id      Int
+  recipient_id   Int?
   content        String?
   created_at     DateTime     @default(now())
    updated_at     DateTime     @updatedAt // Automatically updates on modification
   conversation   Conversation @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
   sender         User         @relation("SenderMessages", fields: [sender_id], references: [id]) // Relation to User
+  recipient      User?        @relation("RecipientMessages", fields: [recipient_id], references: [id])
 }
 
 

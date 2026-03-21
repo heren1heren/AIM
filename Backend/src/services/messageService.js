@@ -4,10 +4,21 @@ const prisma = new PrismaClient();
 
 const createMessage = async (data) => {
     try {
+        // Validate conversation existence
+        const conversationExists = await prisma.conversation.findUnique({
+            where: { id: data.conversation_id },
+        });
+
+        if (!conversationExists) {
+            throw new Error(`Conversation with ID ${data.conversation_id} does not exist`);
+        }
+
+        // Create the message
         return await prisma.message.create({
             data: {
                 conversation_id: data.conversation_id,
                 sender_id: data.sender_id,
+                recipient_id: data.recipient_id || null, // Allow null for group messages
                 content: data.content,
             },
         });
@@ -72,6 +83,6 @@ export default {
     getAllMessages,
     getMessageById,
     getMessagesByConversationId,
-    updateMessage, // Export the new service
+    updateMessage,
     deleteMessage,
 };
