@@ -1,16 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
     console.log('Seeding new data...');
 
+    // Hash passwords
+    const hashedPassword1 = await bcrypt.hash('password123', 10);
+    const hashedPassword2 = await bcrypt.hash('password123', 10);
+    const hashedPassword3 = await bcrypt.hash('password123', 10);
+    const hashedPasswordStudent1 = await bcrypt.hash('password123', 10);
+    const hashedPasswordStudent2 = await bcrypt.hash('password123', 10);
+
     // Create Users with Admin and Teacher Roles
     const user1 = await prisma.user.create({
         data: {
             name: 'User One',
             username: 'user1',
-            password_hash: 'hashed_password_user1',
+            password_hash: hashedPassword1,
             created_at: new Date(),
             admin: { create: {} }, // Assign Admin role
             teacher: { create: {} }, // Assign Teacher role
@@ -32,7 +40,7 @@ async function main() {
         data: {
             name: 'User Two',
             username: 'user2',
-            password_hash: 'hashed_password_user2',
+            password_hash: hashedPassword2,
             created_at: new Date(),
             teacher: { create: {} }, // Assign Teacher role only
             profile: {
@@ -52,7 +60,7 @@ async function main() {
         data: {
             name: 'User Three',
             username: 'user3',
-            password_hash: 'hashed_password_user3',
+            password_hash: hashedPassword3,
             created_at: new Date(),
             admin: { create: {} }, // Assign Admin role only
             profile: {
@@ -73,7 +81,7 @@ async function main() {
         data: {
             name: 'Student One',
             username: 'student1',
-            password_hash: 'hashed_password_student1',
+            password_hash: hashedPasswordStudent1,
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
             profile: {
@@ -93,7 +101,7 @@ async function main() {
         data: {
             name: 'Student Two',
             username: 'student2',
-            password_hash: 'hashed_password_student2',
+            password_hash: hashedPasswordStudent2,
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
             profile: {

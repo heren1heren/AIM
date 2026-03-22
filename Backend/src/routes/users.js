@@ -1,12 +1,18 @@
 import express from 'express';
+import passport from 'passport';
 import userController from '../controllers/userController.js';
+import { authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', userController.createUser); // Create a user
-router.get('/', userController.getAllUsers); // Get all users
-router.get('/:id', userController.getUserById); // Get a user by ID
-router.put('/:id', userController.updateUser); // Update a user (admin usage)
-router.delete('/:id', userController.deleteUser); // Delete a user
+// Protect all routes with JWT authentication
+router.use(passport.authenticate('jwt', { session: false }));
+
+// Define routes with role-based authorization
+router.post('/', authorize(['admin']), userController.createUser);
+router.get('/', authorize(['admin']), userController.getAllUsers);
+router.get('/:id', authorize(['admin']), userController.getUserById);
+router.put('/:id', authorize(['admin']), userController.updateUser);
+router.delete('/:id', authorize(['admin']), userController.deleteUser);
 
 export default router;

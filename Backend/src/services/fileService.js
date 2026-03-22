@@ -5,38 +5,20 @@ import { fileURLToPath } from 'url';
 
 const prisma = new PrismaClient();
 
-// Get the current file's directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Define the directory where files will be stored locally
-const UPLOADS_DIR = path.join(__dirname, '../../uploads');
-
-// Ensure the uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
 
 // Upload a file (store locally and create a database record)
-const uploadFile = async (file, data) => {
+const uploadFile = async (data) => {
     try {
-        // Define the file path for local storage
-        const filePath = path.join(UPLOADS_DIR, file.originalname);
-
-        // Write the file to the local file system
-        fs.writeFileSync(filePath, file.buffer);
-
-        // Add the file path to the database record
-        const fileData = {
-            ...data,
-            filename: file.originalname,
-            filepath: filePath, // Store the local file path
-            mimetype: file.mimetype,
-            size: file.size,
-        };
-
-        // Create the file record in the database
-        return await prisma.file.create({ data: fileData });
+        // Save file metadata to the database
+        return await prisma.file.create({
+            data: {
+                url: data.url,
+                uploaded_by: data.uploaded_by,
+                filename: data.filename,
+                mimetype: data.mimetype,
+                size: data.size,
+            },
+        });
     } catch (error) {
         console.error('Error uploading file:', error);
         throw new Error('Failed to upload file');
@@ -80,9 +62,110 @@ const deleteFile = async (id) => {
     }
 };
 
+// Get files by content_id
+const getFilesByContentId = async (contentId) => {
+    return await prisma.file.findMany({
+        where: { content_id: parseInt(contentId) },
+        include: { uploader: true },
+    });
+};
+
+// Get files by assignment_id
+const getFilesByAssignmentId = async (assignmentId) => {
+    return await prisma.file.findMany({
+        where: { assignment_id: parseInt(assignmentId) },
+        include: { uploader: true },
+    });
+};
+
+// Get files by submission_id
+const getFilesBySubmissionId = async (submissionId) => {
+    return await prisma.file.findMany({
+        where: { submission_id: parseInt(submissionId) },
+        include: { uploader: true },
+    });
+};
+
+// Get files by class_id
+const getFilesByClassId = async (classId) => {
+    return await prisma.file.findMany({
+        where: { class_id: parseInt(classId) },
+        include: { uploader: true },
+    });
+};
+
+// Get files by notification_id
+const getFilesByNotificationId = async (notificationId) => {
+    return await prisma.file.findMany({
+        where: { notification_id: parseInt(notificationId) },
+        include: { uploader: true },
+    });
+};
+
+// Update files by Submission ID
+const updateFilesBySubmissionId = async (submissionId, fileIds) => {
+    try {
+        return await prisma.file.updateMany({
+            where: { id: { in: fileIds } },
+            data: { submission_id: submissionId },
+        });
+    } catch (error) {
+        console.error('Error updating files by submission ID:', error);
+        throw new Error('Failed to update files by submission ID');
+    }
+};
+
+// Update file by Content ID
+const updateFileByContentId = async (contentId, fileId) => {
+    try {
+        return await prisma.file.update({
+            where: { id: fileId },
+            data: { content_id: contentId },
+        });
+    } catch (error) {
+        console.error('Error updating file by content ID:', error);
+        throw new Error('Failed to update file by content ID');
+    }
+};
+
+// Update file by Notification ID
+const updateFileByNotificationId = async (notificationId, fileId) => {
+    try {
+        return await prisma.file.update({
+            where: { id: fileId },
+            data: { notification_id: notificationId },
+        });
+    } catch (error) {
+        console.error('Error updating file by notification ID:', error);
+        throw new Error('Failed to update file by notification ID');
+    }
+};
+
+// Update file by Assignment ID
+const updateFileByAssignmentId = async (assignmentId, fileId) => {
+    try {
+        return await prisma.file.update({
+            where: { id: fileId },
+            data: { assignment_id: assignmentId },
+        });
+    } catch (error) {
+        console.error('Error updating file by assignment ID:', error);
+        throw new Error('Failed to update file by assignment ID');
+    }
+};
+
 export default {
     uploadFile,
     getAllFiles,
     getFileById,
     deleteFile,
+    getFilesByContentId,
+    getFilesByAssignmentId,
+    getFilesBySubmissionId,
+    getFilesByClassId,
+    getFilesByNotificationId,
+    updateFilesBySubmissionId,
+    updateFileByContentId,
+    updateFileByNotificationId,
+    updateFileByAssignmentId,
 };

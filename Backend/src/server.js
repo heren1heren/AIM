@@ -34,6 +34,7 @@ const prisma = new PrismaClient();
 initPassport(passport);
 app.use(passport.initialize());
 
+
 // Routes
 app.use("/auth", authRoutes);
 app.use("/admins", adminRoutes);

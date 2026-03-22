@@ -5,7 +5,7 @@ import userService from '../services/userService.js';
 const createUser = [
     // Validation rules
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
-    body('password_hash').isString().notEmpty().withMessage('Password hash is required and must be a string'),
+    body('password').isString().notEmpty().withMessage('Password is required and must be a string'),
     body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
     body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
     body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
@@ -22,12 +22,13 @@ const createUser = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { username, password_hash, isAdmin, isTeacher, isStudent, profile } = req.body;
+        const { username, password, isAdmin, isTeacher, isStudent, profile } = req.body;
 
         try {
+            // Pass the plain password to the service layer
             const user = await userService.createUser({
                 username,
-                password_hash,
+                password, // Pass plain password, hashing will be handled in the service
                 isAdmin,
                 isTeacher,
                 isStudent,

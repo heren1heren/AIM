@@ -1,17 +1,9 @@
 import express from "express";
-import jwt from "jsonwebtoken";
+import authController from "../controllers/authController.js";
 
 const router = express.Router();
 
-router.post("/login", (req, res) => {
-    const { username } = req.body;
-
-    // Normally you'd validate username/password here
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
-    });
-
-    res.json({ token });
-});
+// Use the authController for the login route
+router.post("/login", authController.login);
 
 export default router;

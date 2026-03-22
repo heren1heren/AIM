@@ -1,12 +1,16 @@
+import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import userProfileService from './userProfileService.js'; // Import userProfileService
+import userProfileService from './userProfileService.js';
 
 const prisma = new PrismaClient();
 
-const createUser = async ({ username, password_hash, isAdmin, isTeacher, isStudent, profile }) => {
+const createUser = async ({ username, password, isAdmin, isTeacher, isStudent, profile }) => {
+    // Hash the password
+    const password_hash = await bcrypt.hash(password, 10);
+
     const userData = {
         username,
-        password_hash,
+        password_hash, // Store the hashed password
         created_at: new Date(),
     };
 
