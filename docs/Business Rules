@@ -1,0 +1,117 @@
+# Business Rules Document
+
+This document outlines all use cases and permissions for each user type: **Admin**, **Teacher**, and **Student**.
+
+> **Definition:**  
+> **Manage** = **ADD, DELETE, UPDATE, VIEW**
+
+---
+
+# 1. Admin Rules
+
+## 🧑‍💼 Users Database
+- Admin can **ADD, DELETE, UPDATE, VIEW** users.
+- Editable fields:
+  - username  
+  - email  
+  - role  
+  - password  
+- Admin **cannot** edit:
+  - nickname  
+  - bias  
+  - avatar  
+
+## 🏫 Classes Database
+- Admin can **manage** all classes.
+- Admin can **manage student enrollment** (add/remove students).
+- Admin can **assign or reassign teachers** to classes.
+- Admin can **VIEW** class details.
+
+## 🏫 Classroom Database
+- Admin can **manage** all classrooms.
+- Admin can **VIEW** classroom details.
+
+## 📝 Assignments Database
+- Admin can **VIEW** all assignments.
+
+## 📤 Submission Database
+- Admin can **VIEW** all submissions.
+
+## 📅 Attendance Database
+- Admin can **VIEW** all attendance records.
+
+## 📚 Content Database
+- Admin can **VIEW** all content.
+
+---
+
+# 2. Teacher Rules
+
+## 🧑‍🏫 Users Database
+- Teacher can **UPDATE** their own profile fields:
+  - nickname  
+  - bias  
+  - avatar  
+- Teacher cannot edit:
+  - username  
+  - email  
+  - role  
+  - password 
+
+## 🏫 Classes Database
+- Teacher can **VIEW** only their assigned classes.
+- Teacher can **manage attendance** for their classes (ADD, UPDATE, VIEW).
+
+## 🏫 Classroom Database
+- Teacher can **UPDATE** and **VIEW** their classroom linked to their classes.
+- Teacher cannot add or delete classrooms.
+
+## 📝 Assignments Database
+- Teacher can **manage** assignments for their classes.
+- Teacher can **request additional submissions** from students.
+- Teacher can **VIEW** all their class assignments.
+
+## 📤 Submission Database
+- Teacher can **VIEW** submissions from their students.
+- Teacher can **MARK / GRADE** submissions.
+- Teacher cannot delete or update submissions (except grading).
+
+## 📚 Content Database
+- Teacher can **manage** content for their classes (ADD, DELETE, UPDATE, VIEW).
+
+---
+
+# 3. Student Rules
+
+## 👤 Users Database
+- Student can **UPDATE** their own profile fields:
+  - nickname  
+  - bias  
+  - avatar  
+- Student cannot edit:
+  - username  
+  - email  
+  - role  
+  - password  
+
+## 🏫 Classes Database
+- Student can **VIEW** their own class information only.
+
+## 🏫 Classroom Database
+- Student can **VIEW** their classroom information only.
+
+## 📝 Assignments Database
+- Student can **VIEW** their assignments.
+
+## 📤 Submission Database
+- Student can **ADD** their own submissions.
+- Student can **VIEW** their own submissions.
+- Student cannot update or delete submissions after submission (unless resubmission is allowed).
+
+## 📅 Attendance Database
+- Student can **VIEW** their attendance.
+- Student can **DISPUTE** attendance records.
+
+## 📚 Content Database
+- Student can **VIEW** content for their classes.
+
