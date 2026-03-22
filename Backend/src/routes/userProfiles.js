@@ -1,13 +1,14 @@
 import express from 'express';
+import passport from 'passport';
 import userProfileController from '../controllers/userProfileController.js';
+import { authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Routes
-// router.post('/', userProfileController.createUserProfile); // Create a user profile
+// Protect all routes with JWT authentication
+router.use(passport.authenticate('jwt', { session: false }));
 
-// router.get('/:id', userProfileController.getUserProfileByUserId); // Get a user profile by ID
-router.put('/:id', userProfileController.updateUserProfile); // Update a user profile
-// router.delete('/:id', userProfileController.deleteUserProfile); // Delete a user profile
+
+router.put('/:id', authorize(['admin', 'teacher', 'student']), userProfileController.updateUserProfile);
 
 export default router;
