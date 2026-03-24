@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { setupInterceptors } from "../services/api";
 
 interface AuthContextType {
     accessToken: string | null;
@@ -18,6 +19,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [roles, setRoles] = useState<string[] | null>(null);
 
+    // Initialize Axios interceptors with the setAccessToken function
+    useEffect(() => {
+        setupInterceptors(setAccessToken);
+    }, []);
+
     return (
         <AuthContext.Provider value={{ accessToken, roles, setAccessToken, setRoles }}>
             {children}
@@ -25,4 +31,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

@@ -3,8 +3,10 @@ import { Box, Button, TextField, Typography, Alert, InputAdornment, IconButton }
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api";
+import { useAuth } from "../../../hooks/AuthContext"; // Import useAuth
 
 export default function SignInPage() {
+    const { setAccessToken, setRoles } = useAuth(); // Use AuthContext to set accessToken and roles
     const navigate = useNavigate();
 
     const [username, setUsername] = useState("");
@@ -18,7 +20,17 @@ export default function SignInPage() {
         try {
             const response = await api.post("/auth/login", { username, password });
 
-            const roles = response.data.roles;
+            // Extract tokens and roles from the response
+            const { accessToken, refreshToken, roles } = response.data;
+
+            // Set accessToken and roles in AuthContext
+            setAccessToken(accessToken);
+            setRoles(roles);
+
+            // Store refreshToken securely (e.g., in localStorage or cookies)
+            localStorage.setItem("refreshToken", refreshToken);
+
+            // Redirect based on roles
             if (roles.includes("admin")) {
                 navigate("/admin/home");
             } else if (roles.includes("teacher")) {

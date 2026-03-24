@@ -1,23 +1,20 @@
 import { createBrowserRouter } from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute";
+import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import AuthLayout from "../layouts/AuthLayout";
 import SignInPage from "../features/auth/pages/SignInPage";
 
-import HomeLayout from "../layouts/HomeLayout";
+import ShareLayout from "../layouts/ShareLayout"; // Use ShareLayout for all roles
 import HomePage from "../pages/HomePage";
-import StudentLayout from "../layouts/StudentLayout";
 import StudentHomePage from "../features/students/pages/StudentHomePage";
 import StudentAssignmentPage from "../features/students/pages/StudentAssignmentPage";
 import StudentContentPage from "../features/students/pages/StudentContentPage";
 import StudentGradePage from "../features/students/pages/StudentGradePage";
-import AdminLayout from "../layouts/AdminLayout";
 import AdminHomePage from "../features/admin/pages/AdminHomePage";
 import ManageCoursesPage from "../features/admin/pages/ManageCoursesPage";
 import ManageEnrollmentsPage from "../features/admin/pages/ManageEnrollmentsPage";
 import ManageNotificationsPage from "../features/admin/pages/ManageNotificationsPage";
 import ManageUsersPage from "../features/admin/pages/ManageUsersPage";
 import SystemSettingsPage from "../features/admin/pages/SystemSettingsPage";
-import TeacherLayout from "../layouts/TeacherLayout";
 import TeacherHomePage from "../features/teachers/pages/TeacherHomePage";
 import TeacherCoursePage from "../features/teachers/pages/TeacherCoursePage";
 import TeacherManageAssignmentPage from "../features/teachers/pages/TeacherManageAssignmentPage";
@@ -32,66 +29,135 @@ import NotFoundPage from "../features/auth/pages/404Page"; // Import 404 page
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: <HomeLayout />,
-        children: [{ index: true, element: <HomePage /> }],
+        element: <ShareLayout />,
+        children: [
+            // Common routes
+            { index: true, element: <HomePage /> },
+
+            // Admin routes
+            {
+                path: "admin/home",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <AdminHomePage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "admin/courses",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ManageCoursesPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "admin/enrollments",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ManageEnrollmentsPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "admin/notifications",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ManageNotificationsPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "admin/users",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ManageUsersPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "admin/settings",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <SystemSettingsPage />
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Teacher routes
+            {
+                path: "teacher/home",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <TeacherHomePage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "teacher/courses",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <TeacherCoursePage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "teacher/assignments",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <TeacherManageAssignmentPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "teacher/submissions",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <TeacherManageSubmissionPage />
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Student routes
+            {
+                path: "student/home",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <StudentHomePage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "student/assignments",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <StudentAssignmentPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "student/content",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <StudentContentPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "student/grades",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <StudentGradePage />
+                    </ProtectedRoute>
+                ),
+            },
+        ],
     },
     {
         path: "/auth",
         element: <AuthLayout />,
         children: [{ path: "login", element: <SignInPage /> }],
     },
-    {
-        path: "/admin",
-        element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminLayout />
-            </ProtectedRoute>
-        ),
-        children: [
-            { path: "home", element: <AdminHomePage /> },
-            { path: "courses", element: <ManageCoursesPage /> },
-            { path: "enrollments", element: <ManageEnrollmentsPage /> },
-            { path: "notifications", element: <ManageNotificationsPage /> },
-            { path: "users", element: <ManageUsersPage /> },
-            { path: "settings", element: <SystemSettingsPage /> },
-        ],
-    },
-    {
-        path: "/teacher",
-        element: (
-            <ProtectedRoute allowedRoles={["teacher"]}>
-                <TeacherLayout />
-            </ProtectedRoute>
-        ),
-        children: [
-            { path: "home", element: <TeacherHomePage /> },
-            { path: "courses", element: <TeacherCoursePage /> },
-            { path: "assignments", element: <TeacherManageAssignmentPage /> },
-            { path: "submissions", element: <TeacherManageSubmissionPage /> },
-        ],
-    },
-    {
-        path: "/student",
-        element: (
-            <ProtectedRoute allowedRoles={["student"]}>
-                <StudentLayout />
-            </ProtectedRoute>
-        ),
-        children: [
-            { path: "home", element: <StudentHomePage /> },
-            { path: "assignments", element: <StudentAssignmentPage /> },
-            { path: "content", element: <StudentContentPage /> },
-            { path: "grades", element: <StudentGradePage /> },
-        ],
-    },
-    // {
-    //     path: "/messages",
-    //     element: (
-    //         <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
-    //             <MessagesPage />
-    //         </ProtectedRoute>
-    //     ),
-    // },
     {
         path: "/401",
         element: <UnauthorizedPage />, // 401 Unauthorized page
