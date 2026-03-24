@@ -3,7 +3,10 @@ import authController from "../controllers/authController.js";
 
 const router = express.Router();
 
-// Use the authController for the login route
+// Login route
 router.post("/login", authController.login);
+
+// Logout route
+router.post("/logout", authController.logout);
 
 export default router;

@@ -3,6 +3,8 @@ import http from "http";
 import passport from "passport";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import cookieParser from "cookie-parser"; // Import cookie-parser
+
 
 import initPassport from "./config/passport.js";
 import authRoutes from "./routes/auth.js";
@@ -22,12 +24,20 @@ import teacherRoutes from "./routes/teacher.js";
 import userRoutes from "./routes/users.js";
 import userProfileRoutes from "./routes/userProfiles.js";
 import initWebSocket from "./sockets/index.js";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-
+app.use(cookieParser());
+app.use(
+    cors({
+        origin: "http://localhost:5173", // Frontend origin
+        methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+        credentials: true, // Allow cookies and credentials
+    })
+);
 const prisma = new PrismaClient();
 
 // Initialize Passport
@@ -53,14 +63,6 @@ app.use("/teachers", teacherRoutes);
 app.use("/users", userRoutes);
 app.use("/user-profiles", userProfileRoutes);
 
-// Protected route example
-app.get(
-    "/protected",
-    passport.authenticate("jwt", { session: false }),
-    (req, res) => {
-        res.json({ message: "You accessed a protected route!", user: req.user });
-    }
-);
 
 // Create HTTP server
 const server = http.createServer(app);

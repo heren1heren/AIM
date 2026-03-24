@@ -16,7 +16,20 @@ const login = async (req, res) => {
 
         console.log('Token generated for:', user.username);
 
-        res.status(200).json({ token, roles });
+        // Set HTTP-only cookies for token and roles
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        res.cookie('roles', JSON.stringify(roles), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        res.status(200).json({ message: 'Login successful', roles });
     } catch (error) {
         console.error('Error during login:', error.message);
         res.status(401).json({ error: error.message });
@@ -24,7 +37,9 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
-    // Since JWTs are stateless, logout is handled on the client side by removing the token.
+    // Clear the cookies to log out the user
+    res.clearCookie('token');
+    res.clearCookie('roles');
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
