@@ -1,60 +1,40 @@
 import { useState } from "react";
-import { Box, Button, TextField, Typography, Alert } from "@mui/material";
+import { Box, Button, TextField, Typography, Alert, InputAdornment, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import api from "../../../services/api";
 
-export default function LoginPage() {
+export default function SignInPage() {
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [errors, setErrors] = useState({ email: "", password: "" });
+    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
     const [serverError, setServerError] = useState("");
 
-    const validate = () => {
-        const newErrors = { email: "", password: "" };
-        let isValid = true;
+    const handleLogin = async () => {
+        setServerError("");
 
-        if (!email.trim()) {
-            newErrors.email = "Email is required";
-            isValid = false;
-        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-            newErrors.email = "Enter a valid email";
-            isValid = false;
+        try {
+            const response = await api.post("/auth/login", { username, password });
+
+            const roles = response.data.roles;
+            if (roles.includes("admin")) {
+                navigate("/admin/home");
+            } else if (roles.includes("teacher")) {
+                navigate("/teacher/home");
+            } else if (roles.includes("student")) {
+                navigate("/student/home");
+            } else {
+                setServerError("No valid role found for this user.");
+            }
+        } catch (error) {
+            setServerError("Invalid username or password");
         }
-
-        if (!password.trim()) {
-            newErrors.password = "Password is required";
-            isValid = false;
-        }
-
-        setErrors(newErrors);
-        return isValid;
     };
 
-    const handleLogin = async () => {
-        setServerError(""); // clear previous server errors
-
-        if (!validate()) return;
-
-        // Simulated API call
-        // const fakeApiResponse = {
-        //     success: false,
-        //     message: "Incorrect email or password",
-        //     role: null,
-        // };
-
-        // // If login fails
-        // if (!fakeApiResponse.success) {
-        //     setServerError(fakeApiResponse.message);
-        //     return;
-        // }
-
-        // If login succeeds
-        // const role = fakeApiResponse.role;
-        const role = "student"
-        // if (role === "admin") navigate("/admin/dashboard");
-        // if (role === "teacher") navigate("/teacher/home");
-        if (role === "student") navigate("/student/home");
+    const togglePasswordVisibility = () => {
+        setShowPassword((prev) => !prev);
     };
 
     return (
@@ -71,24 +51,29 @@ export default function LoginPage() {
 
             <TextField
                 fullWidth
-                label="Email"
-                type="email"
+                label="Username"
+                type="text"
                 margin="normal"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={Boolean(errors.email)}
-                helperText={errors.email}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
             />
 
             <TextField
                 fullWidth
                 label="Password"
-                type="password"
+                type={showPassword ? "text" : "password"} // Toggle between "text" and "password"
                 margin="normal"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                error={Boolean(errors.password)}
-                helperText={errors.password}
+                InputProps={{
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton onClick={togglePasswordVisibility} edge="end">
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                        </InputAdornment>
+                    ),
+                }}
             />
 
             <Button

@@ -1,18 +1,18 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://your-backend-url.com/api",
+    baseURL: "http://localhost:3000/",
     withCredentials: true,
 });
 
-// Optional: attach token automatically
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
 });
 
-// Optional: handle 401 errors globally
+
 api.interceptors.response.use(
     (res) => res,
     (err) => {

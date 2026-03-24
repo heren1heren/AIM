@@ -19,10 +19,9 @@ import {
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Collapse from "@mui/material/Collapse";
-
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
 export default function AdminLayout() {
     const [open, setOpen] = useState(false);
@@ -35,6 +34,8 @@ export default function AdminLayout() {
 
     const [profileMenuAnchor, setProfileMenuAnchor] = useState<HTMLElement | null>(null);
     const [notifMenuAnchor, setNotifMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const navigate = useNavigate();
 
     const toggleDrawer = (state: boolean) => () => {
         setOpen(state);
@@ -54,6 +55,21 @@ export default function AdminLayout() {
 
     const closeNotifMenu = () => {
         setNotifMenuAnchor(null);
+    };
+
+    const handleLogout = async () => {
+        try {
+            // Call the backend logout endpoint to clear cookies
+            await fetch("http://localhost:3000/auth/logout", {
+                method: "POST",
+                credentials: "include", // Include cookies in the request
+            });
+
+            // Redirect to the login page
+            navigate("/");
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     return (
@@ -110,7 +126,14 @@ export default function AdminLayout() {
                         transformOrigin={{ vertical: "top", horizontal: "right" }}
                     >
                         <MenuItem onClick={closeProfileMenu}>Account</MenuItem>
-                        <MenuItem onClick={closeProfileMenu}>Logout</MenuItem>
+                        <MenuItem
+                            onClick={() => {
+                                closeProfileMenu();
+                                handleLogout(); // Call the logout handler
+                            }}
+                        >
+                            Logout
+                        </MenuItem>
                     </Menu>
                 </Toolbar>
             </AppBar>
@@ -154,11 +177,7 @@ export default function AdminLayout() {
 
 
 
-                                <ListItem disablePadding>
-                                    <ListItemButton>
-                                        <ListItemText primary="Messages" />
-                                    </ListItemButton>
-                                </ListItem>
+
                             </List>
                         </Collapse>
                     </List>
@@ -192,13 +211,7 @@ export default function AdminLayout() {
 
                                 <ListItem disablePadding>
                                     <ListItemButton>
-                                        <ListItemText primary="Manage Courses" />
-                                    </ListItemButton>
-                                </ListItem>
-
-                                <ListItem disablePadding>
-                                    <ListItemButton>
-                                        <ListItemText primary=" Manage Enrollments" />
+                                        <ListItemText primary="Manage Class" />
                                     </ListItemButton>
                                 </ListItem>
 
@@ -221,7 +234,11 @@ export default function AdminLayout() {
                             </List>
                         </Collapse>
                     </List>
-
+                    <ListItem disablePadding>
+                        <ListItemButton>
+                            <ListItemText primary="Messages" />
+                        </ListItemButton>
+                    </ListItem>
                 </Box>
             </Drawer>
 
