@@ -16,7 +16,7 @@ interface User {
 }
 
 interface CreateUserInput {
-    name?: string; // Added name field
+    name: string;
     username: string;
     password: string;
     isAdmin?: boolean;
@@ -30,6 +30,7 @@ interface CreateUserInput {
 }
 
 interface UpdateUserInput {
+    name?: string;
     username?: string;
     password?: string;
     addRole?: "admin" | "teacher";
@@ -67,6 +68,7 @@ export const useUsers = () => {
         setLoading(true);
         setError(null);
         try {
+            console.log("Creating user with data:", newUser); // Debugging log
             const response = await api.post("/users", newUser); // Send new user data to the backend
             setUsers((prev) => [...prev, response.data]); // Add the new user to the state
         } catch (err) {

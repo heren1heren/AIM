@@ -19,40 +19,120 @@ import {
     MenuItem,
 } from "@mui/material";
 
-export default function ManageUsersPage() {
-    const { users, loading, error, createUser, deleteUser } = useUsers();
-    const [openDialog, setOpenDialog] = useState(false);
-    const [newUser, setNewUser] = useState({
-        username: "",
-        password: "",
-        role: "student", // Default role
-        profile: { nickname: "", avatar: "", bias: "" },
-    });
+import AddUserDialog from "../components/AddUserDialog";
+import EditUserDialog from "../components/EditUserDialog";
+import DeleteUserDialog from "../components/DeleteUserDialog";
 
+export default function ManageUsersPage() {
+    const { users, loading, error, createUser, updateUser, deleteUser, fetchUsers } = useUsers();
+
+
+    const [name, setName] = useState("");
+    const [nickname, setNickname] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [role, setRole] = useState("student");
+
+    // Edit User State
+    const [editName, setEditName] = useState("");
+    const [editNickname, setEditNickname] = useState("");
+    const [editUsername, setEditUsername] = useState("");
+    const [editPassword, setEditPassword] = useState("");
+    const [editRole, setEditRole] = useState("student");
+
+    // Dialog States
+    const [openAddDialog, setOpenAddDialog] = useState(false);
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<number | null>(null);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+    // Handle Create User
     const handleCreateUser = async () => {
         const roleData = {
-            isAdmin: newUser.role === "admin",
-            isTeacher: newUser.role === "teacher",
-            isStudent: newUser.role === "student",
+            isStudent: role === "student",
+            isTeacher: role === "teacher",
         };
 
-        await createUser({ ...newUser, ...roleData });
-        setNewUser({
-            username: "",
-            password: "",
-            role: "student",
-            profile: { nickname: "", avatar: "", bias: "" },
+        console.log("Sending user data to createUser:", {
+            name,
+            username,
+            password,
+            profile: { nickname },
+            ...roleData,
+        }); // Debugging log
+
+        await createUser({
+            name,
+            username,
+            password,
+            profile: { nickname },
+            ...roleData,
         });
-        setOpenDialog(false);
+
+        // Reset fields
+        setName("");
+        setNickname("");
+        setUsername("");
+        setPassword("");
+        setRole("student");
+        setOpenAddDialog(false);
+        await fetchUsers();
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setNewUser((prev) => ({ ...prev, [name]: value }));
+    // Handle Edit User
+    const handleEditUser = async () => {
+        if (selectedUserId !== null) {
+            await updateUser(selectedUserId, {
+                name: editName,
+                username: editUsername,
+                password: editPassword,
+                profile: { nickname: editNickname },
+            });
+        }
+
+        // Reset fields
+        setEditName("");
+        setEditNickname("");
+        setEditUsername("");
+        setEditPassword("");
+        setEditRole("student");
+        setSelectedUserId(null);
+        setOpenEditDialog(false);
     };
 
+    // Handle Delete User
+    const handleDeleteClick = (userId: number) => {
+        setUserToDelete(userId);
+        setOpenDeleteDialog(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (userToDelete !== null) {
+            await deleteUser(userToDelete);
+        }
+        setUserToDelete(null);
+        setOpenDeleteDialog(false);
+    };
+
+    const handleCancelDelete = () => {
+        setUserToDelete(null);
+        setOpenDeleteDialog(false);
+    };
+
+    // Open Edit Dialog
+    const openEditDialogForUser = (user: any) => {
+        setSelectedUserId(user.id);
+        setEditName(user.name || "");
+        setEditNickname(user.profile?.nickname || "");
+        setEditUsername(user.username);
+        setEditPassword("");
+        setEditRole(user.teacher ? "teacher" : "student");
+        setOpenEditDialog(true);
+    };
+
+    // Get Role
     const getRole = (user: any) => {
-        if (user.admin) return "Admin";
         if (user.teacher) return "Teacher";
         if (user.student) return "Student";
         return "Unknown";
@@ -68,7 +148,7 @@ export default function ManageUsersPage() {
                 variant="contained"
                 color="primary"
                 sx={{ mb: 2 }}
-                onClick={() => setOpenDialog(true)}
+                onClick={() => setOpenAddDialog(true)}
             >
                 Add User
             </Button>
@@ -84,6 +164,9 @@ export default function ManageUsersPage() {
                                 <Typography fontWeight={600}>Name</Typography>
                             </TableCell>
                             <TableCell>
+                                <Typography fontWeight={600}>Nickname</Typography>
+                            </TableCell>
+                            <TableCell>
                                 <Typography fontWeight={600}>Username</Typography>
                             </TableCell>
                             <TableCell>
@@ -95,76 +178,73 @@ export default function ManageUsersPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {users
-                            .filter((user) => !user.admin) // Exclude admin users
-                            .map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>
-                                        {user.profile?.nickname || "N/A"} {/* Display name */}
-                                    </TableCell>
-                                    <TableCell>{user.username}</TableCell>
-                                    <TableCell>{getRole(user)}</TableCell>
-                                    <TableCell align="right">
-                                        <Button
-                                            variant="contained"
-                                            color="error"
-                                            size="small"
-                                            onClick={() => deleteUser(user.id)}
-                                            disabled={user.admin} // Disable delete for admin users
-                                        >
-                                            Delete
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                        {users.map((user) => (
+                            <TableRow key={user.id}>
+                                <TableCell>{user.name || "N/A"}</TableCell>
+                                <TableCell>{user.profile?.nickname || "N/A"}</TableCell>
+                                <TableCell>{user.username}</TableCell>
+                                <TableCell>{getRole(user)}</TableCell>
+                                <TableCell align="right">
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        sx={{ mr: 1 }}
+                                        onClick={() => openEditDialogForUser(user)}
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        size="small"
+                                        onClick={() => handleDeleteClick(user.id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </TableContainer>
 
-            {/* Add User Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add New User</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        label="Username"
-                        name="username"
-                        value={newUser.username}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Role"
-                        name="role"
-                        value={newUser.role}
-                        onChange={handleInputChange}
-                        select
-                        fullWidth
-                        margin="dense"
-                    >
-                        <MenuItem value="admin">Admin</MenuItem>
-                        <MenuItem value="teacher">Teacher</MenuItem>
-                        <MenuItem value="student">Student</MenuItem>
-                    </TextField>
-                    <TextField
-                        label="Password"
-                        name="password"
-                        value={newUser.password}
-                        onChange={handleInputChange}
-                        type="password"
-                        fullWidth
-                        margin="dense"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)} color="secondary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleCreateUser} color="primary">
-                        Add
-                    </Button>
-                </DialogActions>
-            </Dialog>
+
+            <AddUserDialog
+                open={openAddDialog}
+                onClose={() => setOpenAddDialog(false)}
+                onSubmit={handleCreateUser}
+                name={name}
+                setName={setName}
+                nickname={nickname}
+                setNickname={setNickname}
+                username={username}
+                setUsername={setUsername}
+                password={password}
+                setPassword={setPassword}
+                role={role}
+                setRole={setRole}
+            />
+
+            <EditUserDialog
+                open={openEditDialog}
+                onClose={() => setOpenEditDialog(false)}
+                onSubmit={handleEditUser}
+                name={editName}
+                setName={setEditName}
+                nickname={editNickname}
+                setNickname={setEditNickname}
+                username={editUsername}
+                setUsername={setEditUsername}
+                password={editPassword}
+                setPassword={setEditPassword}
+            />
+
+            <DeleteUserDialog
+                open={openDeleteDialog}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+            />
         </Box>
     );
 }
