@@ -51,11 +51,12 @@ export const useUsers = () => {
         setLoading(true);
         setError(null);
         try {
+            console.log("Fetching users with accessToken:", localStorage.getItem("accessToken")); // Debugging log
             const response = await api.get("/users");
-            setUsers(response.data); // Update users state with data from the backend
+            setUsers(response.data);
         } catch (err) {
             setError("Failed to fetch users");
-            console.error(err);
+            console.error("Fetch Users Error:", err); // Log the error for debugging
         } finally {
             setLoading(false);
         }

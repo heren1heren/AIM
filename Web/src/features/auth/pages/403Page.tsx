@@ -4,9 +4,6 @@ import { useNavigate } from "react-router-dom";
 export default function ForbiddenPage() {
     const navigate = useNavigate();
 
-    const handleGoBack = () => {
-        navigate(-1); // Go back to the previous page
-    };
 
     const handleGoHome = () => {
         navigate("/"); // Navigate to the home page

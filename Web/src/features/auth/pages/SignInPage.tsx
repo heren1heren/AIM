@@ -20,14 +20,13 @@ export default function SignInPage() {
         try {
             const response = await api.post("/auth/login", { username, password });
 
-            // Extract tokens and roles from the response
+            console.log("Backend Response:", response.data); // Log the backend response
+
             const { accessToken, roles } = response.data;
 
-            // Set accessToken and roles in AuthContext and persist them
             setAccessToken(accessToken);
             setRoles(roles);
 
-            // Redirect based on roles
             if (roles.includes("admin")) {
                 navigate("/admin/home");
             } else if (roles.includes("teacher")) {
@@ -39,8 +38,7 @@ export default function SignInPage() {
             }
         } catch (error) {
             setServerError("Invalid username or password");
-
-            console.log(error)
+            console.error("Login Error:", error);
         }
     };
 

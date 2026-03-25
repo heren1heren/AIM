@@ -10,6 +10,9 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     const { accessToken, roles } = useAuth(); // Extract accessToken and roles from AuthContext
 
+    console.log("Access Token:", accessToken); // Debugging log
+    console.log("Roles:", roles); // Debugging log
+
     if (!accessToken) {
         // If the user is not authenticated, redirect to the login page
         return <Navigate to="/auth/login" />;
