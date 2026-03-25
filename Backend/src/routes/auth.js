@@ -9,4 +9,7 @@ router.post("/login", authController.login);
 // Logout route
 router.post("/logout", authController.logout);
 
+// Refresh token route
+router.post("/refresh", authController.refreshAccessToken); // Added refresh token route
+
 export default router;

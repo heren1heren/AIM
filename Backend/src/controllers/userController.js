@@ -4,8 +4,10 @@ import userService from '../services/userService.js';
 // Create a user
 const createUser = [
     // Validation rules
+    body('name').optional().isString().withMessage('Name must be a string'), // Added name validation
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
     body('password').isString().notEmpty().withMessage('Password is required and must be a string'),
+
     body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
     body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
     body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
@@ -22,13 +24,15 @@ const createUser = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { username, password, isAdmin, isTeacher, isStudent, profile } = req.body;
+        const { name, username, password, isAdmin, isTeacher, isStudent, profile } = req.body;
 
         try {
             // Pass the plain password to the service layer
             const user = await userService.createUser({
+                name, // Added name
                 username,
                 password, // Pass plain password, hashing will be handled in the service
+
                 isAdmin,
                 isTeacher,
                 isStudent,
@@ -85,8 +89,10 @@ const getUserById = [
 const updateUser = [
     // Validation rules
     param('id').isInt().withMessage('User ID must be a valid integer'),
+    body('name').optional().isString().withMessage('Name must be a string'), // Added name validation
     body('username').optional().isString().withMessage('Username must be a string'),
-    body('password_hash').optional().isString().withMessage('Password hash must be a string'),
+
+    body('password').optional().isString().withMessage('Password must be a string'),
     body('addRole').optional().isIn(['admin', 'teacher']).withMessage('addRole must be one of: admin, teacher'),
     body('removeRole').optional().isIn(['admin', 'teacher']).withMessage('removeRole must be one of: admin, teacher'),
 
@@ -99,10 +105,16 @@ const updateUser = [
         }
 
         const { id } = req.params;
-        const { addRole, removeRole, ...data } = req.body;
+        const { name, username, addRole, removeRole, ...data } = req.body;
 
         try {
-            const updatedUser = await userService.updateUser(parseInt(id), { addRole, removeRole, ...data });
+            const updatedUser = await userService.updateUser(parseInt(id), {
+                name,
+                username,
+                addRole,
+                removeRole,
+                ...data,
+            });
             res.status(200).json(updatedUser);
         } catch (error) {
             console.error('Error updating user:', error);

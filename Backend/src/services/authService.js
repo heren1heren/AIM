@@ -31,16 +31,56 @@ const verifyCredentials = async (username, password) => {
 };
 
 // Generate JWT token
-const generateToken = (user, roles) => {
+const generateToken = (user, roles, expiresIn) => {
     const payload = {
         id: user.id,
         roles,
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' }); // Token valid for 1 day
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
+};
+
+// Verify JWT token
+const verifyToken = (token) => {
+    try {
+        return jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+        console.error('Error verifying token:', error.message);
+        throw error; // Rethrow the error to be handled by the caller
+    }
+};
+
+const refreshAccessToken = async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        console.error('No refresh token provided');
+        return res.status(401).json({ error: "Unauthorized: No refresh token provided" });
+    }
+
+    try {
+        console.log('Received Refresh Token:', refreshToken);
+
+        // Verify the refresh token
+        const decoded = verifyToken(refreshToken);
+        console.log('Decoded Refresh Token:', decoded);
+
+        // Generate a new access token
+        const accessToken = generateToken(
+            { id: decoded.id, roles: decoded.roles },
+            30 * 60 // 30 minutes in seconds
+        );
+
+        res.status(200).json({ accessToken });
+    } catch (error) {
+        console.error('Error during token verification:', error.message);
+        res.status(401).json({ error: "Unauthorized: Invalid or expired refresh token" });
+    }
 };
 
 export default {
     verifyCredentials,
     generateToken,
+    verifyToken,
+    refreshAccessToken,
 };

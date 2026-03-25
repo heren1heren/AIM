@@ -4,46 +4,64 @@ const login = async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        console.log('Attempting login for:', username);
-
         // Verify user credentials
         const { user, roles } = await authService.verifyCredentials(username, password);
 
-        console.log('User verified:', user.username);
 
-        // Generate a JWT token
-        const token = authService.generateToken(user, roles);
+        const accessToken = authService.generateToken(user, roles, 1800, "30m"); // E
 
-        console.log('Token generated for:', user.username);
+        const refreshToken = authService.generateToken(user, roles, "7d"); // Expires in 7 days
 
-        // Set HTTP-only cookies for token and roles
-        res.cookie('token', token, {
+        console.log('Tokens generated for:', user.username);
+
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: false, // Use secure cookies in production
+            sameSite: "none",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
         });
 
-        res.cookie('roles', JSON.stringify(roles), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-        });
 
-        res.status(200).json({ message: 'Login successful', roles });
+        res.status(200).json({ message: "Login successful", accessToken, roles });
     } catch (error) {
         console.error('Error during login:', error.message);
         res.status(401).json({ error: error.message });
     }
 };
 
+const refreshAccessToken = async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({ error: "Unauthorized: No refresh token provided" });
+    }
+
+    try {
+        // Verify the refresh token
+        const decoded = authService.verifyToken(refreshToken);
+
+        // Generate a new access token
+        const accessToken = authService.generateToken(
+            { id: decoded.id }, // Pass only the user object
+            decoded.roles, // Pass roles separately
+            '30m' // Expires in 30 minutes
+        );
+
+        res.status(200).json({ accessToken });
+    } catch (error) {
+        console.error('Error during token refresh:', error.message);
+        res.status(401).json({ error: "Unauthorized: Invalid or expired refresh token" });
+    }
+};
+
 const logout = (req, res) => {
-    // Clear the cookies to log out the user
-    res.clearCookie('token');
-    res.clearCookie('roles');
+    // Clear the refresh token cookie to log out the user
+    res.clearCookie('refreshToken');
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
 export default {
     login,
+    refreshAccessToken,
     logout,
 };
