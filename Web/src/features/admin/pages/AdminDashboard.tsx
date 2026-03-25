@@ -1,6 +1,6 @@
 import { Box, Typography, Paper } from "@mui/material";
 
-export default function AdminHomePage() {
+export default function AdminDashboard() {
     return (
         <Box sx={{ p: 3 }}>
             <Paper

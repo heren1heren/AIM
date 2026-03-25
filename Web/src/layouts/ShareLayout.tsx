@@ -4,7 +4,6 @@ import { Outlet, useNavigate } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import CustomDrawer from "./components/Drawer";
 import { useAuth } from "../hooks/AuthContext";
-import HomePage from "../pages/HomePage"; // Import the HomePage component
 
 export default function ShareLayout() {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -15,10 +14,9 @@ export default function ShareLayout() {
         setDrawerOpen(state);
     };
 
-
     // Define menu groups based on roles
     const adminTools = [
-        { text: "Dashboard", onClick: () => navigate("/admin/home") },
+
         { text: "Manage Users", onClick: () => navigate("/admin/users") },
         { text: "Manage Class", onClick: () => navigate("/admin/classes") },
         { text: "Manage Notifications", onClick: () => navigate("/admin/notifications") },
@@ -26,21 +24,21 @@ export default function ShareLayout() {
     ];
 
     const teacherTools = [
-        { text: "My Courses", onClick: () => navigate("/teacher/courses") },
-        { text: "Assignments", onClick: () => navigate("/teacher/assignments") },
-        { text: "Submissions / Grading", onClick: () => navigate("/teacher/submissions") },
+        { text: "My Classes", onClick: () => navigate("/teacher/classes") },
+        { text: "Manage Assignments", onClick: () => navigate("/teacher/assignments") },
+        { text: "Manage Submissions / Grading", onClick: () => navigate("/teacher/submissions") },
     ];
 
     const studentTools = [
-        { text: "Home", onClick: () => navigate("/student/home") },
         { text: "Assignments", onClick: () => navigate("/student/assignments") },
         { text: "Grades", onClick: () => navigate("/student/grades") },
+        { text: "Your Class", onClick: () => navigate("/student/classes") }, // Added Your Class link
     ];
 
     const commonTools = [
+        { text: "Home", onClick: () => navigate("/") },
         { text: "Messages", onClick: () => navigate("/messages") },
     ];
-
 
     const menuItems = [
         ...(roles?.includes("admin") ? [{ group: "Admin Tools", items: adminTools }] : []),
@@ -50,7 +48,6 @@ export default function ShareLayout() {
         ...(roles?.includes("student") ? [{ group: "Student Tools", items: studentTools }] : []),
         { group: "Common Tools", items: commonTools },
     ];
-
 
     if (!accessToken) {
         return (
@@ -62,6 +59,7 @@ export default function ShareLayout() {
             </Box>
         );
     }
+
     return (
         <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
             {/* NavBar */}

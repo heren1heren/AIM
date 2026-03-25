@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUsers } from "../../../hooks/useUsers";
 import {
     Box,
     Typography,
@@ -18,48 +19,43 @@ import {
     MenuItem,
 } from "@mui/material";
 
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: "teacher" | "student";
-}
-
-// Mock data for users
-const mockUsers: User[] = [
-    { id: "1", name: "Alice", email: "alice@example.com", role: "student" },
-    { id: "2", name: "Bob", email: "bob@example.com", role: "teacher" },
-    { id: "3", name: "Charlie", email: "charlie@example.com", role: "student" },
-];
-
 export default function ManageUsersPage() {
-    const [users, setUsers] = useState<User[]>(mockUsers);
+    const { users, loading, error, createUser, deleteUser } = useUsers();
     const [openDialog, setOpenDialog] = useState(false);
-    const [newUser, setNewUser] = useState<User>({
-        id: "",
-        name: "",
-        email: "",
-        role: "student",
+    const [newUser, setNewUser] = useState({
+        username: "",
+        password: "",
+        role: "student", // Default role
+        profile: { nickname: "", avatar: "", bias: "" },
     });
-    const [password, setPassword] = useState("");
 
-    const handleDelete = (id: string) => {
-        setUsers((prev) => prev.filter((user) => user.id !== id));
-    };
+    const handleCreateUser = async () => {
+        const roleData = {
+            isAdmin: newUser.role === "admin",
+            isTeacher: newUser.role === "teacher",
+            isStudent: newUser.role === "student",
+        };
 
-    const handleAddUser = () => {
-        setUsers((prev) => [
-            ...prev,
-            { ...newUser, id: Date.now().toString() },
-        ]);
+        await createUser({ ...newUser, ...roleData });
+        setNewUser({
+            username: "",
+            password: "",
+            role: "student",
+            profile: { nickname: "", avatar: "", bias: "" },
+        });
         setOpenDialog(false);
-        setNewUser({ id: "", name: "", email: "", role: "student" });
-        setPassword("");
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setNewUser((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const getRole = (user: any) => {
+        if (user.admin) return "Admin";
+        if (user.teacher) return "Teacher";
+        if (user.student) return "Student";
+        return "Unknown";
     };
 
     return (
@@ -77,6 +73,9 @@ export default function ManageUsersPage() {
                 Add User
             </Button>
 
+            {loading && <p>Loading...</p>}
+            {error && <p>{error}</p>}
+
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -85,7 +84,7 @@ export default function ManageUsersPage() {
                                 <Typography fontWeight={600}>Name</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography fontWeight={600}>Email</Typography>
+                                <Typography fontWeight={600}>Username</Typography>
                             </TableCell>
                             <TableCell>
                                 <Typography fontWeight={600}>Role</Typography>
@@ -96,23 +95,28 @@ export default function ManageUsersPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.email}</TableCell>
-                                <TableCell>{user.role}</TableCell>
-                                <TableCell align="right">
-                                    <Button
-                                        variant="contained"
-                                        color="error"
-                                        size="small"
-                                        onClick={() => handleDelete(user.id)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {users
+                            .filter((user) => !user.admin) // Exclude admin users
+                            .map((user) => (
+                                <TableRow key={user.id}>
+                                    <TableCell>
+                                        {user.profile?.nickname || "N/A"} {/* Display name */}
+                                    </TableCell>
+                                    <TableCell>{user.username}</TableCell>
+                                    <TableCell>{getRole(user)}</TableCell>
+                                    <TableCell align="right">
+                                        <Button
+                                            variant="contained"
+                                            color="error"
+                                            size="small"
+                                            onClick={() => deleteUser(user.id)}
+                                            disabled={user.admin} // Disable delete for admin users
+                                        >
+                                            Delete
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                     </TableBody>
                 </Table>
             </TableContainer>
@@ -122,17 +126,9 @@ export default function ManageUsersPage() {
                 <DialogTitle>Add New User</DialogTitle>
                 <DialogContent>
                     <TextField
-                        label="Name"
-                        name="name"
-                        value={newUser.name}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Email"
-                        name="email"
-                        value={newUser.email}
+                        label="Username"
+                        name="username"
+                        value={newUser.username}
                         onChange={handleInputChange}
                         fullWidth
                         margin="dense"
@@ -146,13 +142,15 @@ export default function ManageUsersPage() {
                         fullWidth
                         margin="dense"
                     >
+                        <MenuItem value="admin">Admin</MenuItem>
                         <MenuItem value="teacher">Teacher</MenuItem>
                         <MenuItem value="student">Student</MenuItem>
                     </TextField>
                     <TextField
                         label="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        name="password"
+                        value={newUser.password}
+                        onChange={handleInputChange}
                         type="password"
                         fullWidth
                         margin="dense"
@@ -162,7 +160,7 @@ export default function ManageUsersPage() {
                     <Button onClick={() => setOpenDialog(false)} color="secondary">
                         Cancel
                     </Button>
-                    <Button onClick={handleAddUser} color="primary">
+                    <Button onClick={handleCreateUser} color="primary">
                         Add
                     </Button>
                 </DialogActions>

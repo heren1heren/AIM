@@ -35,12 +35,10 @@ export default function ForbiddenPage() {
             <Typography variant="body1" sx={{ mb: 4 }}>
                 You do not have permission to access this page. Please go back or return to the home page.
             </Typography>
-            <Button variant="contained" color="primary" onClick={handleGoBack} sx={{ mb: 2 }}>
-                Go Back
-            </Button>
-            <Button variant="outlined" color="secondary" onClick={handleGoHome}>
+            <Button variant="contained" color="primary" onClick={handleGoHome} sx={{ mb: 2 }}>
                 Go to Home
             </Button>
+
         </Box>
     );
 }

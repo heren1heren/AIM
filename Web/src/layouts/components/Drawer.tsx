@@ -32,36 +32,57 @@ export default function CustomDrawer({ open, onClose, menuGroups }: DrawerProps)
     return (
         <Drawer anchor="left" open={open} onClose={onClose}>
             <Box sx={{ width: 250 }} role="presentation">
+                {/* Always display Home link at the top */}
+                <List>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => menuGroups.find((group) => group.group === "Common Tools")?.items[0].onClick()}>
+                            <ListItemText primary="Home" />
+                        </ListItemButton>
+                    </ListItem>
+                </List>
+
+                {/* Render menu groups */}
                 {menuGroups.map((group, index) => (
-                    <List
-                        key={index}
-                        subheader={
-                            <ListSubheader
-                                component="div"
-                                onClick={() => toggleGroup(group.group)} // Toggle expand/collapse
-                                sx={{
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                }}
-                            >
-                                {group.group}
-                                {expandedGroups[group.group] ? <ExpandLess /> : <ExpandMore />}
-                            </ListSubheader>
-                        }
-                    >
-                        <Collapse in={expandedGroups[group.group]} timeout="auto" unmountOnExit>
-                            {group.items.map((item, itemIndex) => (
-                                <ListItem key={itemIndex} disablePadding>
-                                    <ListItemButton onClick={item.onClick}>
-                                        <ListItemText primary={item.text} />
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                        </Collapse>
-                    </List>
+                    group.group !== "Common Tools" && ( // Skip "Common Tools" toggle
+                        <List
+                            key={index}
+                            subheader={
+                                <ListSubheader
+                                    component="div"
+                                    onClick={() => toggleGroup(group.group)} // Toggle expand/collapse
+                                    sx={{
+                                        cursor: "pointer",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    {group.group}
+                                    {expandedGroups[group.group] ? <ExpandLess /> : <ExpandMore />}
+                                </ListSubheader>
+                            }
+                        >
+                            <Collapse in={expandedGroups[group.group]} timeout="auto" unmountOnExit>
+                                {group.items.map((item, itemIndex) => (
+                                    <ListItem key={itemIndex} disablePadding>
+                                        <ListItemButton onClick={item.onClick}>
+                                            <ListItemText primary={item.text} />
+                                        </ListItemButton>
+                                    </ListItem>
+                                ))}
+                            </Collapse>
+                        </List>
+                    )
                 ))}
+
+                {/* Always display Messages link at the bottom */}
+                <List>
+                    <ListItem disablePadding>
+                        <ListItemButton onClick={() => menuGroups.find((group) => group.group === "Common Tools")?.items[1].onClick()}>
+                            <ListItemText primary="Messages" />
+                        </ListItemButton>
+                    </ListItem>
+                </List>
             </Box>
         </Drawer>
     );

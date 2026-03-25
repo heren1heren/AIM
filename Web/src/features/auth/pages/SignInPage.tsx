@@ -21,14 +21,11 @@ export default function SignInPage() {
             const response = await api.post("/auth/login", { username, password });
 
             // Extract tokens and roles from the response
-            const { accessToken, refreshToken, roles } = response.data;
+            const { accessToken, roles } = response.data;
 
-            // Set accessToken and roles in AuthContext
+            // Set accessToken and roles in AuthContext and persist them
             setAccessToken(accessToken);
             setRoles(roles);
-
-            // Store refreshToken securely (e.g., in localStorage or cookies)
-            localStorage.setItem("refreshToken", refreshToken);
 
             // Redirect based on roles
             if (roles.includes("admin")) {
@@ -42,6 +39,8 @@ export default function SignInPage() {
             }
         } catch (error) {
             setServerError("Invalid username or password");
+
+            console.log(error)
         }
     };
 

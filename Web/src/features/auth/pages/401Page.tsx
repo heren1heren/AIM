@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 export default function UnauthorizedPage() {
     const navigate = useNavigate();
 
-    const handleGoBack = () => {
-        navigate(-1); // Go back to the previous page
+    const handleGoToHome = () => {
+        navigate("/");
     };
 
     return (
@@ -31,8 +31,8 @@ export default function UnauthorizedPage() {
             <Typography variant="body1" sx={{ mb: 4 }}>
                 You do not have permission to view this page. Please go back or log in with the appropriate credentials.
             </Typography>
-            <Button variant="contained" color="primary" onClick={handleGoBack} sx={{ mb: 2 }}>
-                Go Back
+            <Button variant="contained" color="primary" onClick={handleGoToHome} sx={{ mb: 2 }}>
+                Go To Home
             </Button>
 
         </Box>

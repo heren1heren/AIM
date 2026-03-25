@@ -4,14 +4,13 @@ import AuthLayout from "../layouts/AuthLayout";
 import SignInPage from "../features/auth/pages/SignInPage";
 
 import ShareLayout from "../layouts/ShareLayout"; // Use ShareLayout for all roles
-import HomePage from "../pages/HomePage";
+import HomePage from "../features/common/pages/HomePage"
 import StudentHomePage from "../features/students/pages/StudentHomePage";
 import StudentAssignmentPage from "../features/students/pages/StudentAssignmentPage";
 import StudentContentPage from "../features/students/pages/StudentContentPage";
 import StudentGradePage from "../features/students/pages/StudentGradePage";
-import AdminHomePage from "../features/admin/pages/AdminHomePage";
-import ManageCoursesPage from "../features/admin/pages/ManageCoursesPage";
-import ManageEnrollmentsPage from "../features/admin/pages/ManageEnrollmentsPage";
+import AdminDashboard from "../features/admin/pages/AdminDashboard";
+import ManageClassesPage from "../features/admin/pages/ManageClassesPage";
 import ManageNotificationsPage from "../features/admin/pages/ManageNotificationsPage";
 import ManageUsersPage from "../features/admin/pages/ManageUsersPage";
 import SystemSettingsPage from "../features/admin/pages/SystemSettingsPage";
@@ -39,26 +38,19 @@ export const router = createBrowserRouter([
                 path: "admin/home",
                 element: (
                     <ProtectedRoute allowedRoles={["admin"]}>
-                        <AdminHomePage />
+                        <AdminDashboard />
                     </ProtectedRoute>
                 ),
             },
             {
-                path: "admin/courses",
+                path: "admin/classes",
                 element: (
                     <ProtectedRoute allowedRoles={["admin"]}>
-                        <ManageCoursesPage />
+                        <ManageClassesPage />
                     </ProtectedRoute>
                 ),
             },
-            {
-                path: "admin/enrollments",
-                element: (
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <ManageEnrollmentsPage />
-                    </ProtectedRoute>
-                ),
-            },
+
             {
                 path: "admin/notifications",
                 element: (

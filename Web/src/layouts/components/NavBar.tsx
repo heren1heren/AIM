@@ -38,8 +38,8 @@ export default function NavBar({ onMenuClick }: NavBarProps) {
                     {title}
                 </Typography>
 
-                {/* Notification Menu - Only show if user is authenticated */}
-                {accessToken && <NotificationMenu />}
+                {/* Notification Menu - Only show if user is authenticated and not an admin */}
+                {accessToken && !roles?.includes("admin") && <NotificationMenu />}
 
                 {/* Profile or Login */}
                 <ProfileLogin />
