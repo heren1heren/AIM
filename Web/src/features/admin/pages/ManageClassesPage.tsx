@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Box,
     Typography,
@@ -10,58 +10,68 @@ import {
     TableRow,
     Paper,
     Button,
-    TextField,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    MenuItem,
+    TextField,
+
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useClass } from "../../../hooks/useClasses";
 
-interface Course {
-    id: string;
-    name: string;
-    instructor: string;
-    students: number;
-}
+export default function ManageClassesPage() {
+    const {
+        classes,
+        fetchClasses,
+        createClass,
+        loading,
+        error,
+    } = useClass();
 
-// Mock data for courses and instructors
-const mockCourses: Course[] = [
-    { id: "1", name: "Math 101", instructor: "John Doe", students: 30 },
-    { id: "2", name: "Physics 201", instructor: "Jane Smith", students: 25 },
-    { id: "3", name: "History 101", instructor: "Emily Johnson", students: 40 },
-    { id: "4", name: "Biology 101", instructor: "Michael Brown", students: 35 },
-];
 
-const mockInstructors = ["John Doe", "Jane Smith", "Emily Johnson", "Michael Brown", "Sarah Connor"];
+    useEffect(() => {
+        fetchClasses();
+    }, [fetchClasses]);
 
-export default function ManageCoursesPage() {
-    const [courses, setCourses] = useState<Course[]>(mockCourses);
+
+    const navigate = useNavigate();
+
     const [openDialog, setOpenDialog] = useState(false);
-    const [newCourse, setNewCourse] = useState({ name: "", instructor: "", students: 0 });
-
-    const handleDelete = (id: string) => {
-        setCourses((prevCourses) => prevCourses.filter((course) => course.id !== id));
-    };
-
-    const handleAddCourse = () => {
-        setCourses((prevCourses) => [
-            ...prevCourses,
-            { id: Date.now().toString(), ...newCourse },
-        ]);
-        setOpenDialog(false);
-        setNewCourse({ name: "", instructor: "", students: 0 });
-    };
+    const [newClass, setNewClass] = useState({
+        name: "",
+        description: "",
+        teacher_id: "",
+        start_date: "",
+        end_date: "",
+    });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setNewCourse((prev) => ({ ...prev, [name]: value }));
+        setNewClass((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleAddClass = async () => {
+        await createClass({
+            ...newClass,
+            teacher_id: parseInt(newClass.teacher_id),
+            start_date: new Date(newClass.start_date).toISOString(),
+            end_date: new Date(newClass.end_date).toISOString(),
+        });
+        setOpenDialog(false);
+        setNewClass({
+            name: "",
+            description: "",
+            teacher_id: "",
+            start_date: "",
+            end_date: "",
+        });
     };
 
     return (
         <Box sx={{ p: 3 }}>
             <Typography variant="h4" fontWeight={600} gutterBottom>
-                Manage Courses
+                Manage Classes
             </Typography>
 
             <Button
@@ -70,50 +80,66 @@ export default function ManageCoursesPage() {
                 sx={{ mb: 2 }}
                 onClick={() => setOpenDialog(true)}
             >
-                Add Course
+                Add Class
             </Button>
+
+            {loading && <Typography>Loading...</Typography>}
+            {error && <Typography color="error">{error}</Typography>}
 
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
                         <TableRow>
                             <TableCell>
-                                <Typography fontWeight={600}>Course Name</Typography>
+                                <Typography fontWeight={600}>Class Name</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography fontWeight={600}>Instructor</Typography>
+                                <Typography fontWeight={600}>Teacher</Typography>
                             </TableCell>
-                            <TableCell align="right">
+                            <TableCell align="center">
+                                <Typography fontWeight={600}>Assignments</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                                <Typography fontWeight={600}>Attendances</Typography>
+                            </TableCell>
+                            <TableCell align="center">
                                 <Typography fontWeight={600}>Students</Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                                <Typography fontWeight={600}>Actions</Typography>
                             </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {courses.map((course) => (
-                            <TableRow key={course.id}>
-                                <TableCell>{course.name}</TableCell>
-                                <TableCell>{course.instructor}</TableCell>
-                                <TableCell align="right">{course.students}</TableCell>
-                                <TableCell align="right">
-                                    <Button
-                                        variant="contained"
-                                        color="error"
-                                        size="small"
-                                        onClick={() => handleDelete(course.id)}
-                                        sx={{ mr: 1 }}
-                                    >
-                                        Delete
-                                    </Button>
+                        {(classes || []).map((cls) => (
+                            <TableRow key={cls.id}>
+                                <TableCell>{cls.name}</TableCell>
+                                <TableCell>{cls.teacher_id}</TableCell>
+                                <TableCell align="center">
                                     <Button
                                         variant="contained"
                                         color="secondary"
                                         size="small"
-                                        onClick={() => alert("Edit functionality not implemented yet")}
+                                        onClick={() => navigate(`/class/${cls.id}/assignments`)}
                                     >
-                                        Edit
+                                        View
+                                    </Button>
+                                </TableCell>
+                                <TableCell align="center">
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        size="small"
+                                        onClick={() => navigate(`/class/${cls.id}/attendance`)}
+                                    >
+                                        View
+                                    </Button>
+                                </TableCell>
+                                <TableCell align="center">
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        size="small"
+                                        onClick={() => navigate(`/class/${cls.id}/students`)}
+                                    >
+                                        View
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -122,38 +148,48 @@ export default function ManageCoursesPage() {
                 </Table>
             </TableContainer>
 
-            {/* Add Course Dialog */}
+            {/* Add Class Dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add New Course</DialogTitle>
+                <DialogTitle>Add New Class</DialogTitle>
                 <DialogContent>
                     <TextField
-                        label="Course Name"
+                        label="Class Name"
                         name="name"
-                        value={newCourse.name}
+                        value={newClass.name}
                         onChange={handleInputChange}
                         fullWidth
                         margin="dense"
                     />
                     <TextField
-                        label="Instructor"
-                        name="instructor"
-                        value={newCourse.instructor}
+                        label="Description"
+                        name="description"
+                        value={newClass.description}
                         onChange={handleInputChange}
-                        select
                         fullWidth
                         margin="dense"
-                    >
-                        {mockInstructors.map((instructor) => (
-                            <MenuItem key={instructor} value={instructor}>
-                                {instructor}
-                            </MenuItem>
-                        ))}
-                    </TextField>
+                    />
                     <TextField
-                        label="Number of Students"
-                        name="students"
-                        type="number"
-                        value={newCourse.students}
+                        label="Teacher ID"
+                        name="teacher_id"
+                        value={newClass.teacher_id}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="dense"
+                    />
+                    <TextField
+                        label="Start Date"
+                        name="start_date"
+                        type="date"
+                        value={newClass.start_date}
+                        onChange={handleInputChange}
+                        fullWidth
+                        margin="dense"
+                    />
+                    <TextField
+                        label="End Date"
+                        name="end_date"
+                        type="date"
+                        value={newClass.end_date}
                         onChange={handleInputChange}
                         fullWidth
                         margin="dense"
@@ -163,7 +199,7 @@ export default function ManageCoursesPage() {
                     <Button onClick={() => setOpenDialog(false)} color="secondary">
                         Cancel
                     </Button>
-                    <Button onClick={handleAddCourse} color="primary">
+                    <Button onClick={handleAddClass} color="primary">
                         Add
                     </Button>
                 </DialogActions>
