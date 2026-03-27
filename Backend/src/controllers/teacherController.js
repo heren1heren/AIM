@@ -1,5 +1,6 @@
 import { validationResult, body, param } from 'express-validator';
 import { PrismaClient } from '@prisma/client';
+import teacherService from '../services/teacherService.js';
 
 const prisma = new PrismaClient();
 
@@ -150,10 +151,24 @@ const deleteTeacher = [
     },
 ];
 
+// Assign teacher to class
+const assignTeacherToClass = async (req, res) => {
+    const { teacher_id, class_id } = req.body;
+
+    try {
+        const updatedClass = await teacherService.assignTeacherToClass(teacher_id, class_id);
+        res.status(200).json(updatedClass);
+    } catch (error) {
+        console.error('Error assigning teacher to class:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export default {
     createTeacher,
     getAllTeachers, // Added getAllTeachers here
     getTeacherById,
     updateTeacher,
     deleteTeacher,
+    assignTeacherToClass,
 };

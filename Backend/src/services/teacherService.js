@@ -60,10 +60,32 @@ const deleteTeacher = async (id) => {
     });
 };
 
+// Assign a teacher to a class
+const assignTeacherToClass = async (teacher_id, class_id) => {
+    // Check if the teacher exists
+    const teacher = await prisma.teacher.findUnique({ where: { id: parseInt(teacher_id) } });
+    if (!teacher) {
+        throw new Error('Teacher not found');
+    }
+
+    // Check if the class exists
+    const classData = await prisma.class.findUnique({ where: { id: parseInt(class_id) } });
+    if (!classData) {
+        throw new Error('Class not found');
+    }
+
+    // Assign the teacher to the class
+    return await prisma.class.update({
+        where: { id: parseInt(class_id) },
+        data: { teacher_id: parseInt(teacher_id) },
+    });
+};
+
 export default {
     getAllTeachers,
     getTeacherById,
     createTeacher,
     updateTeacher,
     deleteTeacher,
+    assignTeacherToClass, // Export the new function
 };

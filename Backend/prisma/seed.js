@@ -22,13 +22,8 @@ async function main() {
             created_at: new Date(),
             admin: { create: {} }, // Assign Admin role
             teacher: { create: {} }, // Assign Teacher role
-            profile: {
-                create: {
-                    nickname: 'UserOne',
-                    avatar: 'https://example.com/avatar-user1.png',
-                    bias: 'neutral',
-                },
-            },
+            avatarUrl: 'https://example.com/avatar-user1.png',
+            bias: 'neutral',
         },
         include: {
             admin: true,
@@ -43,13 +38,8 @@ async function main() {
             password_hash: hashedPassword2,
             created_at: new Date(),
             teacher: { create: {} }, // Assign Teacher role only
-            profile: {
-                create: {
-                    nickname: 'UserTwo',
-                    avatar: 'https://example.com/avatar-user2.png',
-                    bias: 'positive',
-                },
-            },
+            avatarUrl: 'https://example.com/avatar-user2.png',
+            bias: 'positive',
         },
         include: {
             teacher: true,
@@ -63,13 +53,8 @@ async function main() {
             password_hash: hashedPassword3,
             created_at: new Date(),
             admin: { create: {} }, // Assign Admin role only
-            profile: {
-                create: {
-                    nickname: 'UserThree',
-                    avatar: 'https://example.com/avatar-user3.png',
-                    bias: 'neutral',
-                },
-            },
+            avatarUrl: 'https://example.com/avatar-user3.png',
+            bias: 'neutral',
         },
         include: {
             admin: true,
@@ -84,13 +69,8 @@ async function main() {
             password_hash: hashedPasswordStudent1,
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
-            profile: {
-                create: {
-                    nickname: 'StudentOne',
-                    avatar: 'https://example.com/avatar-student1.png',
-                    bias: 'curious',
-                },
-            },
+            avatarUrl: 'https://example.com/avatar-student1.png',
+            bias: 'curious',
         },
         include: {
             student: true,
@@ -104,13 +84,8 @@ async function main() {
             password_hash: hashedPasswordStudent2,
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
-            profile: {
-                create: {
-                    nickname: 'StudentTwo',
-                    avatar: 'https://example.com/avatar-student2.png',
-                    bias: 'curious',
-                },
-            },
+            avatarUrl: 'https://example.com/avatar-student2.png',
+            bias: 'curious',
         },
         include: {
             student: true,

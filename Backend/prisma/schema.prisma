@@ -17,37 +17,26 @@ model User {
   id            Int           @id @default(autoincrement())
   name          String?
   username      String        @unique
-  
   password_hash String
   created_at    DateTime      @default(now())
+  updated_at    DateTime?      @updatedAt
+  avatarUrl        String?       
+  bias          String?       
+
   admin         Admin?        @relation("AdminUser")
   teacher       Teacher?      @relation("TeacherUser")
   student       Student?      @relation("StudentUser")
   notifications Notification[] @relation("CreatedNotifications")
   messages      Message[]     @relation("SenderMessages") 
-  received_messages  Message[]     @relation("RecipientMessages") // Messa
+  received_messages  Message[] @relation("RecipientMessages")
   files         File[]        @relation("UploadedFiles")
-  profile       UserProfile?  @relation
-  conversations Conversation[] @relation("UserConversations") // Many-to-many relation with Conversation
-}
-
-model UserProfile {
-  id        Int     @id @default(autoincrement())
-  user_id   Int     @unique
-  nickname  String? // Optional nickname for the user
-  avatar    String? // URL for the user's avatar
-  bias      String? // Optional bias or preference
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  user      User    @relation(fields: [user_id], references: [id]) 
+  conversations Conversation[] @relation("UserConversations")
 }
 
 model Admin {
   id      Int  @id @default(autoincrement())
   user_id Int  @unique
   user    User @relation("AdminUser", fields: [user_id], references: [id])
-  
 }
 
 model Teacher {
@@ -148,13 +137,11 @@ model Message {
   recipient_id   Int?
   content        String?
   created_at     DateTime     @default(now())
-   updated_at     DateTime     @updatedAt // Automatically updates on modification
+  updated_at     DateTime     @updatedAt // Automatically updates on modification
   conversation   Conversation @relation(fields: [conversation_id], references: [id]) // Relation to Conversation
   sender         User         @relation("SenderMessages", fields: [sender_id], references: [id]) // Relation to User
   recipient      User?        @relation("RecipientMessages", fields: [recipient_id], references: [id])
 }
-
-
 
 model File {
   id             Int          @id @default(autoincrement())

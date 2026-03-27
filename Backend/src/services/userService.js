@@ -1,17 +1,20 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import userProfileService from './userProfileService.js';
+
 
 const prisma = new PrismaClient();
 
-const createUser = async ({ username, password, isAdmin, isTeacher, isStudent, profile }) => {
+const createUser = async ({ name, username, password, isAdmin, isTeacher, isStudent, avatarUrl, bias }) => {
     // Hash the password
     const password_hash = await bcrypt.hash(password, 10);
 
     const userData = {
+        name,
         username,
         password_hash, // Store the hashed password
         created_at: new Date(),
+        avatarUrl,
+        bias,
     };
 
     // Create the user
@@ -28,24 +31,20 @@ const createUser = async ({ username, password, isAdmin, isTeacher, isStudent, p
         await prisma.student.create({ data: { user_id: user.id } });
     }
 
-    // Create the user profile (if profile data is provided)
-    const userProfile = await userProfileService.createUserProfile({
-        user_id: user.id,
-        nickname: profile?.nickname || null,
-        avatar: profile?.avatar || null,
-        bias: profile?.bias || null,
-    });
 
-    return { user, profile: userProfile };
+
+
+    return { user };
 };
 
 const getAllUsers = async () => {
     return await prisma.user.findMany({
+        where: {
+            admin: null, // Exclude users with the admin role
+        },
         include: {
-            admin: true,
             teacher: true,
             student: true,
-            profile: true,
         },
     });
 };
@@ -57,19 +56,25 @@ const getUserById = async (id) => {
             admin: true,
             teacher: true,
             student: true,
-            profile: true,
-        }, // Include the user profile in the result
+
+        },
     });
 };
 
-const updateUser = async (id, { addRole, removeRole, ...userData }) => {
+const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, bias, ...userData }) => {
+
+    if (password) {
+        const password_hash = await bcrypt.hash(password, 10);
+        userData.password_hash = password_hash;
+    }
+
     // Update the user details
     const updatedUser = await prisma.user.update({
         where: { id: parseInt(id) },
         data: userData,
     });
 
-    // Add a role
+
     if (addRole === 'admin') {
         const existingAdmin = await prisma.admin.findUnique({
             where: { user_id: id },
@@ -86,7 +91,7 @@ const updateUser = async (id, { addRole, removeRole, ...userData }) => {
         }
     }
 
-    // Remove a role
+    // dependencies are also needed to be deleted
     if (removeRole === 'admin') {
         await prisma.admin.deleteMany({ where: { user_id: id } });
     } else if (removeRole === 'teacher') {
@@ -97,13 +102,29 @@ const updateUser = async (id, { addRole, removeRole, ...userData }) => {
 };
 
 const deleteUser = async (id) => {
+    const userId = parseInt(id);
 
-    await userProfileService.deleteUserProfile(id);
-    await prisma.student.deleteMany({ where: { user_id: id } });
-    await prisma.teacher.deleteMany({ where: { user_id: id } });
-    await prisma.admin.deleteMany({ where: { user_id: id } });
+    // Fetch the user's role
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }, // Only fetch the role field
+    });
 
-    return await prisma.user.delete({ where: { id: parseInt(id) } });
+    if (!user) {
+        throw new Error(`User with ID ${userId} not found`);
+    }
+
+    // Delete role-specific records based on the user's role
+    if (user.role === 'student') {
+        await prisma.student.deleteMany({ where: { user_id: userId } });
+    } else if (user.role === 'teacher') {
+        await prisma.teacher.deleteMany({ where: { user_id: userId } });
+    } else if (user.role === 'admin') {
+        await prisma.admin.deleteMany({ where: { user_id: userId } });
+    }
+
+    // Finally, delete the user
+    return await prisma.user.delete({ where: { id: userId } });
 };
 
 export default {

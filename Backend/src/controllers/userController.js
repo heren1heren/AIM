@@ -4,39 +4,34 @@ import userService from '../services/userService.js';
 // Create a user
 const createUser = [
     // Validation rules
-    body('name').optional().isString().withMessage('Name must be a string'), // Added name validation
+    body('name').isString().withMessage('Name is required and must be a string'),
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
     body('password').isString().notEmpty().withMessage('Password is required and must be a string'),
-
+    body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
+    body('bias').optional().isString().withMessage('Bias must be a string'),
     body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
     body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
     body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
-    body('profile').optional().isObject().withMessage('Profile must be an object'),
-    body('profile.nickname').optional().isString().withMessage('Nickname must be a string'),
-    body('profile.avatar').optional().isString().withMessage('Avatar must be a string'),
-    body('profile.bias').optional().isString().withMessage('Bias must be a string'),
 
     // Controller logic
     async (req, res) => {
-        // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { name, username, password, isAdmin, isTeacher, isStudent, profile } = req.body;
+        const { name, username, password, avatarUrl, bias, isAdmin, isTeacher, isStudent } = req.body;
 
         try {
-            // Pass the plain password to the service layer
             const user = await userService.createUser({
-                name, // Added name
+                name,
                 username,
-                password, // Pass plain password, hashing will be handled in the service
-
+                password,
+                avatarUrl,
+                bias,
                 isAdmin,
                 isTeacher,
                 isStudent,
-                profile,
             });
             res.status(201).json(user);
         } catch (error) {
@@ -89,12 +84,13 @@ const getUserById = [
 const updateUser = [
     // Validation rules
     param('id').isInt().withMessage('User ID must be a valid integer'),
-    body('name').optional().isString().withMessage('Name must be a string'), // Added name validation
+    body('name').optional().isString().withMessage('Name must be a string'),
     body('username').optional().isString().withMessage('Username must be a string'),
-
     body('password').optional().isString().withMessage('Password must be a string'),
-    body('addRole').optional().isIn(['admin', 'teacher']).withMessage('addRole must be one of: admin, teacher'),
-    body('removeRole').optional().isIn(['admin', 'teacher']).withMessage('removeRole must be one of: admin, teacher'),
+    body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
+    body('bias').optional().isString().withMessage('Bias must be a string'),
+    body('addRole').optional().isIn(['admin', 'teacher', 'student']).withMessage('addRole must be one of: admin, teacher, student'),
+    body('removeRole').optional().isIn(['admin', 'teacher', 'student']).withMessage('removeRole must be one of: admin, teacher, student'),
 
     // Controller logic
     async (req, res) => {
@@ -105,15 +101,17 @@ const updateUser = [
         }
 
         const { id } = req.params;
-        const { name, username, addRole, removeRole, ...data } = req.body;
+        const { name, username, password, avatarUrl, bias, addRole, removeRole } = req.body;
 
         try {
             const updatedUser = await userService.updateUser(parseInt(id), {
                 name,
                 username,
+                password,
+                avatarUrl,
+                bias,
                 addRole,
                 removeRole,
-                ...data,
             });
             res.status(200).json(updatedUser);
         } catch (error) {
@@ -148,10 +146,39 @@ const deleteUser = [
     },
 ];
 
+// Update avatarUrl or bias
+const updateUserProfile = [
+    param('id').isInt().withMessage('User ID must be a valid integer'),
+    body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
+    body('bias').optional().isString().withMessage('Bias must be a string'),
+
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { id } = req.params;
+        const { avatarUrl, bias } = req.body;
+
+        try {
+            const updatedUser = await userService.updateUser(parseInt(id), {
+                avatarUrl,
+                bias,
+            });
+            res.status(200).json(updatedUser);
+        } catch (error) {
+            console.error('Error updating user profile:', error);
+            res.status(500).json({ error: 'Failed to update user profile' });
+        }
+    },
+];
+
 export default {
     createUser,
     getAllUsers,
     getUserById,
     updateUser,
     deleteUser,
+    updateUserProfile,
 };

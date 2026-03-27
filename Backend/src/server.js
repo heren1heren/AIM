@@ -22,7 +22,7 @@ import studentRoutes from "./routes/students.js";
 import submissionRoutes from "./routes/submissions.js";
 import teacherRoutes from "./routes/teacher.js";
 import userRoutes from "./routes/users.js";
-import userProfileRoutes from "./routes/userProfiles.js";
+
 import initWebSocket from "./sockets/index.js";
 import cors from "cors";
 
@@ -61,7 +61,7 @@ app.use("/students", studentRoutes);
 app.use("/submissions", submissionRoutes);
 app.use("/teachers", teacherRoutes);
 app.use("/users", userRoutes);
-app.use("/user-profiles", userProfileRoutes);
+
 
 
 // Create HTTP server

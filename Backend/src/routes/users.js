@@ -14,5 +14,6 @@ router.get('/', authorize(['admin']), userController.getAllUsers);
 router.get('/:id', authorize(['admin']), userController.getUserById);
 router.put('/:id', authorize(['admin']), userController.updateUser);
 router.delete('/:id', authorize(['admin']), userController.deleteUser);
+router.patch('/:id/profile', userController.updateUserProfile);
 
 export default router;
