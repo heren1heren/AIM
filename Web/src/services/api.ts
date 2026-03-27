@@ -1,5 +1,5 @@
 import axios from "axios";
-import { refreshAccessToken } from "./auth.service";
+import { refreshAccessToken } from "./authService";
 
 const api = axios.create({
     baseURL: "http://localhost:3000/",

@@ -3,24 +3,14 @@ import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import AuthLayout from "../layouts/AuthLayout";
 import SignInPage from "../features/auth/pages/SignInPage";
 
-import ShareLayout from "../layouts/ShareLayout"; // Use ShareLayout for all roles
+import ShareLayout from "../layouts/ShareLayout";
 import HomePage from "../features/common/pages/HomePage"
-import StudentHomePage from "../features/students/pages/StudentHomePage";
-import StudentAssignmentPage from "../features/students/pages/StudentAssignmentPage";
-import StudentContentPage from "../features/students/pages/StudentContentPage";
-import StudentGradePage from "../features/students/pages/StudentGradePage";
-import AdminDashboard from "../features/admin/pages/AdminDashboard";
-import ManageClassesPage from "../features/admin/pages/ManageClassesPage";
-import ManageNotificationsPage from "../features/admin/pages/ManageNotificationsPage";
-import ManageUsersPage from "../features/admin/pages/ManageUsersPage";
-import SystemSettingsPage from "../features/admin/pages/SystemSettingsPage";
-import TeacherHomePage from "../features/teachers/pages/TeacherHomePage";
-import TeacherCoursePage from "../features/teachers/pages/TeacherCoursePage";
-import TeacherManageAssignmentPage from "../features/teachers/pages/TeacherManageAssignmentPage";
-import TeacherManageSubmissionPage from "../features/teachers/pages/TeacherManageSubmissionPage";
-// import MessagesPage from "../pages/MessagePage";
-import InternalServerErrorPage from "../features/auth/pages/500Page"; // Import 500 page
 
+import ManageClassesPage from "../features/class/pages/ManageClassPage";
+import ManageNotificationsPage from "../features/notification/pages/ManageNotificationPage";
+import ManageUsersPage from "../features/user/pages/ManageUsersPage"
+
+import InternalServerErrorPage from "../features/auth/pages/500Page";
 import UnauthorizedPage from "../features/auth/pages/401Page"; // Import 401 page
 import ForbiddenPage from "../features/auth/pages/403Page"; // Import 403 page
 import NotFoundPage from "../features/auth/pages/404Page"; // Import 404 page
@@ -33,116 +23,135 @@ export const router = createBrowserRouter([
             // Common routes
             { index: true, element: <HomePage /> },
 
-            // Admin routes
+            // USERS Route
             {
-                path: "admin/home",
-                element: (
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <AdminDashboard />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "admin/classes",
-                element: (
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <ManageClassesPage />
-                    </ProtectedRoute>
-                ),
-            },
-
-            {
-                path: "admin/notifications",
-                element: (
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <ManageNotificationsPage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "admin/users",
+                path: "/users",
                 element: (
                     <ProtectedRoute allowedRoles={["admin"]}>
                         <ManageUsersPage />
                     </ProtectedRoute>
                 ),
             },
+
+            // CLASSES Route
             {
-                path: "admin/settings",
+                path: "/classes",
                 element: (
                     <ProtectedRoute allowedRoles={["admin"]}>
-                        <SystemSettingsPage />
+                        <ManageClassesPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/classes/teacher/:id",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <ManageClassesPage />
+                    </ProtectedRoute>
+                ),
+            },
+            // class detail page
+            {
+                path: "/classes/:id",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div></div>
+                    </ProtectedRoute>
+                ),
+                children: [
+                    {
+                        path: "assignments", // Assignments Page for the Class
+                        element: (
+                            <ProtectedRoute allowedRoles={["teacher"]}>
+                                <div></div> {/* Page to display all assignments for the class */}
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: "assignments/:assignmentId",
+                        element: (
+                            <ProtectedRoute allowedRoles={["teacher"]}>
+                                <div></div> {/* Page to display assignment details */}
+                            </ProtectedRoute>
+                        ),
+                        children: [
+                            {
+                                path: "submissions", // Submissions for the Assignment
+                                element: (
+                                    <ProtectedRoute allowedRoles={["teacher"]}>
+                                        <div></div> {/* Page to display all submissions for the assignment */}
+                                    </ProtectedRoute>
+                                ),
+                            },
+                        ],
+                    },
+                    {
+                        path: "content", // Content Page for the Class
+                        element: (
+                            <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                                <div></div>{/* Page to display all content for the class */}
+                            </ProtectedRoute>
+                        ),
+                    },
+                    {
+                        path: "content/:id", // Content Page for the Class
+                        element: (
+                            <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                                <div></div>{/* Page to display all content for the class */}
+                            </ProtectedRoute>
+                        ),
+                    },
+                ],
+            },
+            // NOTIFICATIONS Route
+            {
+                path: "/notifications",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <ManageNotificationsPage />
+                    </ProtectedRoute>
+                ),
+            },
+            // notification details
+            {
+                path: "/notifications/:id",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin"]}>
+                        <div> </div>
+                    </ProtectedRoute>
+                ),
+            },
+            // ASSIGNMENTS Route
+
+            {
+                path: "/student/:id/assignments",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <div></div>
+                    </ProtectedRoute>
+                ),
+            },
+            // SUBMISSIONS Route
+            {
+                path: "/student/:id/submissions",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <div></div>
                     </ProtectedRoute>
                 ),
             },
 
-            // Teacher routes
-            {
-                path: "teacher/home",
-                element: (
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                        <TeacherHomePage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "teacher/courses",
-                element: (
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                        <TeacherCoursePage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "teacher/assignments",
-                element: (
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                        <TeacherManageAssignmentPage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "teacher/submissions",
-                element: (
-                    <ProtectedRoute allowedRoles={["teacher"]}>
-                        <TeacherManageSubmissionPage />
-                    </ProtectedRoute>
-                ),
-            },
 
-            // Student routes
+            // CONTENT Route
             {
-                path: "student/home",
+                path: "/content/class/:id",
                 element: (
-                    <ProtectedRoute allowedRoles={["student"]}>
-                        <StudentHomePage />
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div></div>
                     </ProtectedRoute>
                 ),
             },
-            {
-                path: "student/assignments",
-                element: (
-                    <ProtectedRoute allowedRoles={["student"]}>
-                        <StudentAssignmentPage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "student/content",
-                element: (
-                    <ProtectedRoute allowedRoles={["student"]}>
-                        <StudentContentPage />
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "student/grades",
-                element: (
-                    <ProtectedRoute allowedRoles={["student"]}>
-                        <StudentGradePage />
-                    </ProtectedRoute>
-                ),
-            },
+            // content detail 
         ],
     },
     {

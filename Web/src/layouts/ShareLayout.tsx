@@ -17,22 +17,22 @@ export default function ShareLayout() {
     // Define menu groups based on roles
     const adminTools = [
 
-        { text: "Manage Users", onClick: () => navigate("/admin/users") },
-        { text: "Manage Class", onClick: () => navigate("/admin/classes") },
-        { text: "Manage Notifications", onClick: () => navigate("/admin/notifications") },
-        { text: "System Settings", onClick: () => navigate("/admin/settings") },
+        { text: "Manage Users", onClick: () => navigate("/users") },
+        { text: "Manage Class", onClick: () => navigate("/classes") },
+        { text: "Manage Notifications", onClick: () => navigate("/notifications") },
+
     ];
 
     const teacherTools = [
-        { text: "My Classes", onClick: () => navigate("/teacher/classes") },
-        { text: "Manage Assignments", onClick: () => navigate("/teacher/assignments") },
+        { text: "My Classes", onClick: () => navigate("/classes") },
         { text: "Manage Submissions / Grading", onClick: () => navigate("/teacher/submissions") },
     ];
 
     const studentTools = [
-        { text: "Assignments", onClick: () => navigate("/student/assignments") },
-        { text: "Grades", onClick: () => navigate("/student/grades") },
-        { text: "Your Class", onClick: () => navigate("/student/classes") }, // Added Your Class link
+        { text: "Your Class", onClick: () => navigate("/classes/:id") },
+        { text: "Assignments", onClick: () => navigate("/student/:id/assignments") },
+        { text: "Grades", onClick: () => navigate("/student/:id/submissions") },
+
     ];
 
     const commonTools = [

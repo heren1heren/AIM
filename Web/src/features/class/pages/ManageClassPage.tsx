@@ -32,7 +32,7 @@ export default function ManageClassesPage() {
 
     useEffect(() => {
         fetchClasses();
-    }, [fetchClasses]);
+    }, []);
 
 
     const navigate = useNavigate();
@@ -108,42 +108,50 @@ export default function ManageClassesPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {(classes || []).map((cls) => (
-                            <TableRow key={cls.id}>
-                                <TableCell>{cls.name}</TableCell>
-                                <TableCell>{cls.teacher_id}</TableCell>
-                                <TableCell align="center">
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        size="small"
-                                        onClick={() => navigate(`/class/${cls.id}/assignments`)}
-                                    >
-                                        View
-                                    </Button>
-                                </TableCell>
-                                <TableCell align="center">
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        size="small"
-                                        onClick={() => navigate(`/class/${cls.id}/attendance`)}
-                                    >
-                                        View
-                                    </Button>
-                                </TableCell>
-                                <TableCell align="center">
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        size="small"
-                                        onClick={() => navigate(`/class/${cls.id}/students`)}
-                                    >
-                                        View
-                                    </Button>
+                        {Array.isArray(classes) && classes.length > 0 ? (
+                            classes.map((cls) => (
+                                <TableRow key={cls.id}>
+                                    <TableCell>{cls.name}</TableCell>
+                                    <TableCell>{cls.teacher_id}</TableCell>
+                                    <TableCell align="center">
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            size="small"
+                                            onClick={() => navigate(`/class/${cls.id}/assignments`)}
+                                        >
+                                            View
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            size="small"
+                                            onClick={() => navigate(`/class/${cls.id}/attendance`)}
+                                        >
+                                            View
+                                        </Button>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            size="small"
+                                            onClick={() => navigate(`/class/${cls.id}/students`)}
+                                        >
+                                            View
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center">
+                                    No classes available.
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

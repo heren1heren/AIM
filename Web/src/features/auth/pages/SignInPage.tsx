@@ -27,15 +27,7 @@ export default function SignInPage() {
             setAccessToken(accessToken);
             setRoles(roles);
 
-            if (roles.includes("admin")) {
-                navigate("/admin/home");
-            } else if (roles.includes("teacher")) {
-                navigate("/teacher/home");
-            } else if (roles.includes("student")) {
-                navigate("/student/home");
-            } else {
-                setServerError("No valid role found for this user.");
-            }
+            navigate("/");
         } catch (error) {
             setServerError("Invalid username or password");
             console.error("Login Error:", error);
