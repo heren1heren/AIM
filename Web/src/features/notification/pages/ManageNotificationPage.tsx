@@ -10,19 +10,15 @@ import {
     TableRow,
     Paper,
     Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    MenuItem,
 } from "@mui/material";
+import AddNotificationDialog from "../components/AddNotificationDialog"; // Import the dialog component
 
 interface Notification {
     id: string;
     title: string;
     message: string;
     target: "teacher" | "student" | "all";
+    fileUrl?: string; // Optional file URL
 }
 
 const mockNotifications: Notification[] = [
@@ -34,29 +30,28 @@ const mockNotifications: Notification[] = [
 export default function ManageNotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
     const [openDialog, setOpenDialog] = useState(false);
-    const [newNotification, setNewNotification] = useState<Notification>({
-        id: "",
-        title: "",
-        message: "",
-        target: "all",
-    });
 
+    // Handle adding a new notification
+    const handleAddNotification = (notificationData: {
+        title: string;
+        content: string;
+        file: File | null;
+    }) => {
+        const newNotification: Notification = {
+            id: Date.now().toString(),
+            title: notificationData.title,
+            message: notificationData.content,
+            target: "all", // Default target (can be updated to allow selection in the dialog)
+            fileUrl: notificationData.file ? URL.createObjectURL(notificationData.file) : undefined, // Generate a URL for the uploaded file
+        };
+
+        setNotifications((prev) => [...prev, newNotification]);
+        setOpenDialog(false); // Close the dialog
+    };
+
+    // Handle deleting a notification
     const handleDelete = (id: string) => {
         setNotifications((prev) => prev.filter((notification) => notification.id !== id));
-    };
-
-    const handleAddNotification = () => {
-        setNotifications((prev) => [
-            ...prev,
-            { ...newNotification, id: Date.now().toString() },
-        ]);
-        setOpenDialog(false);
-        setNewNotification({ id: "", title: "", message: "", target: "all" });
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setNewNotification((prev) => ({ ...prev, [name]: value }));
     };
 
     return (
@@ -87,6 +82,9 @@ export default function ManageNotificationsPage() {
                             <TableCell>
                                 <Typography fontWeight={600}>Target</Typography>
                             </TableCell>
+                            <TableCell>
+                                <Typography fontWeight={600}>Attached File</Typography>
+                            </TableCell>
                             <TableCell align="right">
                                 <Typography fontWeight={600}>Actions</Typography>
                             </TableCell>
@@ -98,6 +96,15 @@ export default function ManageNotificationsPage() {
                                 <TableCell>{notification.title}</TableCell>
                                 <TableCell>{notification.message}</TableCell>
                                 <TableCell>{notification.target}</TableCell>
+                                <TableCell>
+                                    {notification.fileUrl ? (
+                                        <a href={notification.fileUrl} target="_blank" rel="noopener noreferrer">
+                                            View File
+                                        </a>
+                                    ) : (
+                                        "No file attached"
+                                    )}
+                                </TableCell>
                                 <TableCell align="right">
                                     <Button
                                         variant="contained"
@@ -115,50 +122,11 @@ export default function ManageNotificationsPage() {
             </TableContainer>
 
             {/* Add Notification Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add Notification</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        label="Title"
-                        name="title"
-                        value={newNotification.title}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Message"
-                        name="message"
-                        value={newNotification.message}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                        multiline
-                        rows={3}
-                    />
-                    <TextField
-                        label="Target"
-                        name="target"
-                        value={newNotification.target}
-                        onChange={handleInputChange}
-                        select
-                        fullWidth
-                        margin="dense"
-                    >
-                        <MenuItem value="teacher">Teacher</MenuItem>
-                        <MenuItem value="student">Student</MenuItem>
-                        <MenuItem value="all">All</MenuItem>
-                    </TextField>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)} color="secondary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleAddNotification} color="primary">
-                        Add
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <AddNotificationDialog
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+                onSubmit={handleAddNotification} // Pass the handler to the dialog
+            />
         </Box>
     );
 }

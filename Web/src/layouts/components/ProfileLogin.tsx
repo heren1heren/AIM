@@ -49,7 +49,14 @@ export default function ProfileLogin() {
                     anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                     transformOrigin={{ vertical: "top", horizontal: "right" }}
                 >
-                    <MenuItem onClick={closeMenu}>Account</MenuItem>
+                    <MenuItem
+                        onClick={() => {
+                            closeMenu();
+                            navigate("/profile"); // Navigate to the user profile page
+                        }}
+                    >
+                        Profile
+                    </MenuItem>
                     <MenuItem
                         onClick={() => {
                             closeMenu();

@@ -25,7 +25,6 @@ export default function ShareLayout() {
 
     const teacherTools = [
         { text: "My Classes", onClick: () => navigate("/classes") },
-        { text: "Manage Submissions / Grading", onClick: () => navigate("/teacher/submissions") },
     ];
 
     const studentTools = [

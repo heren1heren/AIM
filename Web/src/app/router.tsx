@@ -14,6 +14,9 @@ import InternalServerErrorPage from "../features/auth/pages/500Page";
 import UnauthorizedPage from "../features/auth/pages/401Page"; // Import 401 page
 import ForbiddenPage from "../features/auth/pages/403Page"; // Import 403 page
 import NotFoundPage from "../features/auth/pages/404Page"; // Import 404 page
+import MessagePage from "../features/common/pages/MessagePage";
+import NotificationDetailPage from "../features/notification/pages/NotificationDetailPage";
+import UserProfilePage from "../features/user/pages/UserProfilePage";
 
 export const router = createBrowserRouter([
     {
@@ -22,13 +25,27 @@ export const router = createBrowserRouter([
         children: [
             // Common routes
             { index: true, element: <HomePage /> },
-
+            {
+                path: "/messages", element: (
+                    <ProtectedRoute allowedRoles={["admin", "student", "teacher"]}>
+                        <MessagePage />
+                    </ProtectedRoute>
+                ),
+            },
             // USERS Route
             {
                 path: "/users",
                 element: (
                     <ProtectedRoute allowedRoles={["admin"]}>
                         <ManageUsersPage />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/profile",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <UserProfilePage />
                     </ProtectedRoute>
                 ),
             },
@@ -116,8 +133,8 @@ export const router = createBrowserRouter([
             {
                 path: "/notifications/:id",
                 element: (
-                    <ProtectedRoute allowedRoles={["admin"]}>
-                        <div> </div>
+                    <ProtectedRoute allowedRoles={["admim", "teacher", "student"]}>
+                        <NotificationDetailPage /> {/* Page to display notification details */}
                     </ProtectedRoute>
                 ),
             },
@@ -143,15 +160,7 @@ export const router = createBrowserRouter([
 
 
             // CONTENT Route
-            {
-                path: "/content/class/:id",
-                element: (
-                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
-                        <div></div>
-                    </ProtectedRoute>
-                ),
-            },
-            // content detail 
+
         ],
     },
     {
