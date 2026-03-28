@@ -1,10 +1,9 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
 
-
 const prisma = new PrismaClient();
 
-const createUser = async ({ name, username, password, isAdmin, isTeacher, isStudent, avatarUrl, bias }) => {
+const createUser = async ({ name, username, password, isAdmin, isTeacher, isStudent, avatarUrl, bio }) => {
     // Hash the password
     const password_hash = await bcrypt.hash(password, 10);
 
@@ -14,7 +13,7 @@ const createUser = async ({ name, username, password, isAdmin, isTeacher, isStud
         password_hash, // Store the hashed password
         created_at: new Date(),
         avatarUrl,
-        bias,
+        bio,
     };
 
     // Create the user
@@ -30,9 +29,6 @@ const createUser = async ({ name, username, password, isAdmin, isTeacher, isStud
     if (isStudent) {
         await prisma.student.create({ data: { user_id: user.id } });
     }
-
-
-
 
     return { user };
 };
@@ -56,13 +52,11 @@ const getUserById = async (id) => {
             admin: true,
             teacher: true,
             student: true,
-
         },
     });
 };
 
-const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, bias, ...userData }) => {
-
+const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, bio, ...userData }) => {
     if (password) {
         const password_hash = await bcrypt.hash(password, 10);
         userData.password_hash = password_hash;
@@ -73,7 +67,6 @@ const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, 
         where: { id: parseInt(id) },
         data: userData,
     });
-
 
     if (addRole === 'admin') {
         const existingAdmin = await prisma.admin.findUnique({
@@ -127,10 +120,41 @@ const deleteUser = async (id) => {
     return await prisma.user.delete({ where: { id: userId } });
 };
 
+// Get user profile by ID
+const getUserProfileById = async (id) => {
+    return await prisma.user.findUnique({
+        where: { id: parseInt(id) },
+        select: {
+            id: true,
+            name: true,
+            username: true,
+            avatarUrl: true,
+            bio: true,
+            created_at: true,
+            updated_at: true,
+        },
+    });
+};
+
+// Update user profile
+const updateUserProfile = async (id, { name, avatarUrl, bio }) => {
+    return await prisma.user.update({
+        where: { id: parseInt(id) },
+        data: {
+            name,
+            avatarUrl,
+            bio,
+            updated_at: new Date(),
+        },
+    });
+};
+
 export default {
     createUser,
     getAllUsers,
     getUserById,
     updateUser,
     deleteUser,
+    getUserProfileById, // Added
+    updateUserProfile,  // Added
 };

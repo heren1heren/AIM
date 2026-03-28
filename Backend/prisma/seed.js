@@ -23,7 +23,7 @@ async function main() {
             admin: { create: {} }, // Assign Admin role
             teacher: { create: {} }, // Assign Teacher role
             avatarUrl: 'https://example.com/avatar-user1.png',
-            bias: 'neutral',
+            bio: 'neutral',
         },
         include: {
             admin: true,
@@ -39,7 +39,7 @@ async function main() {
             created_at: new Date(),
             teacher: { create: {} }, // Assign Teacher role only
             avatarUrl: 'https://example.com/avatar-user2.png',
-            bias: 'positive',
+            bio: 'positive',
         },
         include: {
             teacher: true,
@@ -54,7 +54,7 @@ async function main() {
             created_at: new Date(),
             admin: { create: {} }, // Assign Admin role only
             avatarUrl: 'https://example.com/avatar-user3.png',
-            bias: 'neutral',
+            bio: 'neutral',
         },
         include: {
             admin: true,
@@ -70,7 +70,7 @@ async function main() {
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
             avatarUrl: 'https://example.com/avatar-student1.png',
-            bias: 'curious',
+            bio: 'curious',
         },
         include: {
             student: true,
@@ -85,7 +85,7 @@ async function main() {
             created_at: new Date(),
             student: { create: {} }, // Assign Student role
             avatarUrl: 'https://example.com/avatar-student2.png',
-            bias: 'curious',
+            bio: 'curious',
         },
         include: {
             student: true,

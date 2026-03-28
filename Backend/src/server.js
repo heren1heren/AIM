@@ -30,11 +30,13 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.use(cookieParser());
 app.use(
     cors({
         origin: "http://localhost:5173", // Frontend origin
-        methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allowed HTTP methods
         credentials: true, // Allow cookies and credentials
     })
 );

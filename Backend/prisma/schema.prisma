@@ -21,7 +21,7 @@ model User {
   created_at    DateTime      @default(now())
   updated_at    DateTime?      @updatedAt
   avatarUrl        String?       
-  bias          String?       
+  bio        String?       
 
   admin         Admin?        @relation("AdminUser")
   teacher       Teacher?      @relation("TeacherUser")

@@ -8,7 +8,7 @@ const createUser = [
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
     body('password').isString().notEmpty().withMessage('Password is required and must be a string'),
     body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
-    body('bias').optional().isString().withMessage('Bias must be a string'),
+    body('bio').optional().isString().withMessage('Bio must be a string'), // Changed from "bias" to "bio"
     body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
     body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
     body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
@@ -20,7 +20,7 @@ const createUser = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { name, username, password, avatarUrl, bias, isAdmin, isTeacher, isStudent } = req.body;
+        const { name, username, password, avatarUrl, bio, isAdmin, isTeacher, isStudent } = req.body;
 
         try {
             const user = await userService.createUser({
@@ -28,7 +28,7 @@ const createUser = [
                 username,
                 password,
                 avatarUrl,
-                bias,
+                bio, // Changed from "bias" to "bio"
                 isAdmin,
                 isTeacher,
                 isStudent,
@@ -80,6 +80,33 @@ const getUserById = [
     },
 ];
 
+// Get user profile by ID
+const getUserProfileById = [
+    // Validation rules
+    param('id').isInt().withMessage('User ID must be a valid integer'),
+
+    // Controller logic
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { id } = req.params;
+
+        try {
+            const userProfile = await userService.getUserProfileById(parseInt(id));
+            if (!userProfile) {
+                return res.status(404).json({ error: 'User profile not found' });
+            }
+            res.status(200).json(userProfile);
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+    },
+];
+
 // Update user for admin usage
 const updateUser = [
     // Validation rules
@@ -88,7 +115,7 @@ const updateUser = [
     body('username').optional().isString().withMessage('Username must be a string'),
     body('password').optional().isString().withMessage('Password must be a string'),
     body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
-    body('bias').optional().isString().withMessage('Bias must be a string'),
+    body('bio').optional().isString().withMessage('Bio must be a string'), // Changed from "bias" to "bio"
     body('addRole').optional().isIn(['admin', 'teacher', 'student']).withMessage('addRole must be one of: admin, teacher, student'),
     body('removeRole').optional().isIn(['admin', 'teacher', 'student']).withMessage('removeRole must be one of: admin, teacher, student'),
 
@@ -101,7 +128,7 @@ const updateUser = [
         }
 
         const { id } = req.params;
-        const { name, username, password, avatarUrl, bias, addRole, removeRole } = req.body;
+        const { name, username, password, avatarUrl, bio, addRole, removeRole } = req.body;
 
         try {
             const updatedUser = await userService.updateUser(parseInt(id), {
@@ -109,7 +136,7 @@ const updateUser = [
                 username,
                 password,
                 avatarUrl,
-                bias,
+                bio, // Changed from "bias" to "bio"
                 addRole,
                 removeRole,
             });
@@ -146,11 +173,12 @@ const deleteUser = [
     },
 ];
 
-// Update avatarUrl or bias
+// Update avatarUrl, bio, or name
 const updateUserProfile = [
     param('id').isInt().withMessage('User ID must be a valid integer'),
+    body('name').optional().isString().withMessage('Name must be a string'),
     body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
-    body('bias').optional().isString().withMessage('Bias must be a string'),
+    body('bio').optional().isString().withMessage('Bio must be a string'), // Changed from "bias" to "bio"
 
     async (req, res) => {
         const errors = validationResult(req);
@@ -159,12 +187,16 @@ const updateUserProfile = [
         }
 
         const { id } = req.params;
-        const { avatarUrl, bias } = req.body;
+        console.log('Request Body:', req.body); // Debugging line
+
+        const { name, avatarUrl, bio } = req.body;
+
 
         try {
-            const updatedUser = await userService.updateUser(parseInt(id), {
+            const updatedUser = await userService.updateUserProfile(parseInt(id), {
+                name,
                 avatarUrl,
-                bias,
+                bio,
             });
             res.status(200).json(updatedUser);
         } catch (error) {
@@ -178,6 +210,7 @@ export default {
     createUser,
     getAllUsers,
     getUserById,
+    getUserProfileById,
     updateUser,
     deleteUser,
     updateUserProfile,

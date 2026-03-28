@@ -14,6 +14,11 @@ router.get('/', authorize(['admin']), userController.getAllUsers);
 router.get('/:id', authorize(['admin']), userController.getUserById);
 router.put('/:id', authorize(['admin']), userController.updateUser);
 router.delete('/:id', authorize(['admin']), userController.deleteUser);
+
+// Get user profile by ID (accessible to all authenticated users)
+router.get('/:id/profile', userController.getUserProfileById);
+
+// Update user profile (accessible to all authenticated users)
 router.patch('/:id/profile', userController.updateUserProfile);
 
 export default router;
