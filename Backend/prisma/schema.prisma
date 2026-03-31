@@ -19,9 +19,10 @@ model User {
   username      String        @unique
   password_hash String
   created_at    DateTime      @default(now())
-  updated_at    DateTime?      @updatedAt
-  avatarUrl        String?       
-  bio        String?       
+  updated_at    DateTime?     @updatedAt
+  bio           String?
+
+  avatarKey    String?
 
   admin         Admin?        @relation("AdminUser")
   teacher       Teacher?      @relation("TeacherUser")
@@ -145,7 +146,7 @@ model Message {
 
 model File {
   id             Int          @id @default(autoincrement())
-  url            String
+  key            String       
   filename       String?
   mimetype       String?
   size           Int?
@@ -161,8 +162,10 @@ model File {
   submission     Submission?  @relation(fields: [submission_id], references: [id])
   assignment     Assignment?  @relation(fields: [assignment_id], references: [id])
   class          Class?       @relation(fields: [class_id], references: [id])
-  notification   Notification? @relation(fields: [notification_id], references: [id]) // Relation to Notification
+  notification   Notification? @relation(fields: [notification_id], references: [id])
   content        Content?     @relation(fields: [content_id], references: [id])
+
+ 
 }
 
 model Attendance {

@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import fileService from './fileService.js';
 
 const prisma = new PrismaClient();
 
-const createUser = async ({ name, username, password, isAdmin, isTeacher, isStudent, avatarUrl, bio }) => {
+const createUser = async ({ name, username, password, isAdmin, isTeacher, isStudent, avatarKey, bio }) => {
     // Hash the password
     const password_hash = await bcrypt.hash(password, 10);
 
@@ -12,7 +13,7 @@ const createUser = async ({ name, username, password, isAdmin, isTeacher, isStud
         username,
         password_hash, // Store the hashed password
         created_at: new Date(),
-        avatarUrl,
+        avatarKey,
         bio,
     };
 
@@ -137,17 +138,18 @@ const getUserProfileById = async (id) => {
 };
 
 // Update user profile
-const updateUserProfile = async (id, { name, avatarUrl, bio }) => {
+const updateUserProfile = async (id, { name, avatarKey, bio }) => {
     return await prisma.user.update({
         where: { id: parseInt(id) },
         data: {
             name,
-            avatarUrl,
+            avatarKey,
             bio,
             updated_at: new Date(),
         },
     });
 };
+
 
 export default {
     createUser,
@@ -155,6 +157,7 @@ export default {
     getUserById,
     updateUser,
     deleteUser,
-    getUserProfileById, // Added
-    updateUserProfile,  // Added
+    getUserProfileById,
+    updateUserProfile,
+
 };

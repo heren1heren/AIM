@@ -1,5 +1,7 @@
 import { validationResult, body, param } from 'express-validator';
+import multer from 'multer';
 import userService from '../services/userService.js';
+
 
 // Create a user
 const createUser = [
@@ -7,8 +9,8 @@ const createUser = [
     body('name').isString().withMessage('Name is required and must be a string'),
     body('username').isString().notEmpty().withMessage('Username is required and must be a string'),
     body('password').isString().notEmpty().withMessage('Password is required and must be a string'),
-    body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
-    body('bio').optional().isString().withMessage('Bio must be a string'), // Changed from "bias" to "bio"
+    body('avatarKey').optional().isString().withMessage('Avatar key must be a string'),
+    body('bio').optional().isString().withMessage('Bio must be a string'),
     body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
     body('isTeacher').optional().isBoolean().withMessage('isTeacher must be a boolean'),
     body('isStudent').optional().isBoolean().withMessage('isStudent must be a boolean'),
@@ -20,15 +22,15 @@ const createUser = [
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { name, username, password, avatarUrl, bio, isAdmin, isTeacher, isStudent } = req.body;
+        const { name, username, password, avatarKey, bio, isAdmin, isTeacher, isStudent } = req.body;
 
         try {
             const user = await userService.createUser({
                 name,
                 username,
                 password,
-                avatarUrl,
-                bio, // Changed from "bias" to "bio"
+                avatarKey,
+                bio,
                 isAdmin,
                 isTeacher,
                 isStudent,
@@ -177,8 +179,8 @@ const deleteUser = [
 const updateUserProfile = [
     param('id').isInt().withMessage('User ID must be a valid integer'),
     body('name').optional().isString().withMessage('Name must be a string'),
-    body('avatarUrl').optional().isString().withMessage('Avatar URL must be a string'),
-    body('bio').optional().isString().withMessage('Bio must be a string'), // Changed from "bias" to "bio"
+    body('avatarKey').optional().isString().withMessage('Avatar key must be a string'),
+    body('bio').optional().isString().withMessage('Bio must be a string'),
 
     async (req, res) => {
         const errors = validationResult(req);
@@ -187,15 +189,12 @@ const updateUserProfile = [
         }
 
         const { id } = req.params;
-        console.log('Request Body:', req.body); // Debugging line
-
-        const { name, avatarUrl, bio } = req.body;
-
+        const { name, avatarKey, bio } = req.body;
 
         try {
             const updatedUser = await userService.updateUserProfile(parseInt(id), {
                 name,
-                avatarUrl,
+                avatarKey,
                 bio,
             });
             res.status(200).json(updatedUser);
@@ -206,6 +205,8 @@ const updateUserProfile = [
     },
 ];
 
+
+
 export default {
     createUser,
     getAllUsers,
@@ -214,4 +215,5 @@ export default {
     updateUser,
     deleteUser,
     updateUserProfile,
+
 };

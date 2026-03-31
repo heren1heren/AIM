@@ -6,23 +6,20 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('Seeding new data...');
 
-    // Hash passwords
     const hashedPassword1 = await bcrypt.hash('password123', 10);
     const hashedPassword2 = await bcrypt.hash('password123', 10);
     const hashedPassword3 = await bcrypt.hash('password123', 10);
     const hashedPasswordStudent1 = await bcrypt.hash('password123', 10);
     const hashedPasswordStudent2 = await bcrypt.hash('password123', 10);
 
-    // Create Users with Admin and Teacher Roles
     const user1 = await prisma.user.create({
         data: {
             name: 'User One',
             username: 'user1',
             password_hash: hashedPassword1,
             created_at: new Date(),
-            admin: { create: {} }, // Assign Admin role
-            teacher: { create: {} }, // Assign Teacher role
-            avatarUrl: 'https://example.com/avatar-user1.png',
+            admin: { create: {} },
+            teacher: { create: {} },
             bio: 'neutral',
         },
         include: {
@@ -37,8 +34,7 @@ async function main() {
             username: 'user2',
             password_hash: hashedPassword2,
             created_at: new Date(),
-            teacher: { create: {} }, // Assign Teacher role only
-            avatarUrl: 'https://example.com/avatar-user2.png',
+            teacher: { create: {} },
             bio: 'positive',
         },
         include: {
@@ -52,8 +48,7 @@ async function main() {
             username: 'user3',
             password_hash: hashedPassword3,
             created_at: new Date(),
-            admin: { create: {} }, // Assign Admin role only
-            avatarUrl: 'https://example.com/avatar-user3.png',
+            admin: { create: {} },
             bio: 'neutral',
         },
         include: {
@@ -61,15 +56,13 @@ async function main() {
         },
     });
 
-    // Create Student Users (Single Role Only)
     const student1 = await prisma.user.create({
         data: {
             name: 'Student One',
             username: 'student1',
             password_hash: hashedPasswordStudent1,
             created_at: new Date(),
-            student: { create: {} }, // Assign Student role
-            avatarUrl: 'https://example.com/avatar-student1.png',
+            student: { create: {} },
             bio: 'curious',
         },
         include: {
@@ -83,8 +76,7 @@ async function main() {
             username: 'student2',
             password_hash: hashedPasswordStudent2,
             created_at: new Date(),
-            student: { create: {} }, // Assign Student role
-            avatarUrl: 'https://example.com/avatar-student2.png',
+            student: { create: {} },
             bio: 'curious',
         },
         include: {
@@ -92,12 +84,11 @@ async function main() {
         },
     });
 
-    // Create Class Instances
     const class1 = await prisma.class.create({
         data: {
             name: 'Math 10-1',
             description: 'Introduction to Algebra',
-            teacher_id: user2.teacher.id, // Assign Teacher (User Two)
+            teacher_id: user2.teacher.id,
             start_date: new Date('2026-09-01'),
             end_date: new Date('2026-12-15'),
         },
@@ -107,13 +98,12 @@ async function main() {
         data: {
             name: 'Science 10-1',
             description: 'Introduction to Physics',
-            teacher_id: user1.teacher.id, // Assign Teacher (User One)
+            teacher_id: user1.teacher.id,
             start_date: new Date('2026-09-01'),
             end_date: new Date('2026-12-15'),
         },
     });
 
-    // Create Assignment Instances
     const assignment1 = await prisma.assignment.create({
         data: {
             class_id: class1.id,
@@ -134,7 +124,6 @@ async function main() {
         },
     });
 
-    // Create Content Instances
     const content1 = await prisma.content.create({
         data: {
             class_id: class1.id,
@@ -155,26 +144,45 @@ async function main() {
         },
     });
 
-    // Create File Instances
     const file1 = await prisma.file.create({
         data: {
-            url: 'https://example.com/file1.pdf',
+            key: 'math-syllabus-12345.pdf',
             filename: 'Algebra Syllabus',
             mimetype: 'application/pdf',
             size: 1024,
-            uploaded_by: user2.id, // Uploaded by Teacher (User Two)
+            uploaded_by: user2.id,
             class_id: class1.id,
         },
     });
 
     const file2 = await prisma.file.create({
         data: {
-            url: 'https://example.com/file2.pdf',
+            key: 'physics-syllabus-67890.pdf',
             filename: 'Physics Syllabus',
             mimetype: 'application/pdf',
             size: 2048,
-            uploaded_by: user1.id, // Uploaded by Teacher (User One)
+            uploaded_by: user1.id,
             class_id: class2.id,
+        },
+    });
+
+    const avatarFile1 = await prisma.file.create({
+        data: {
+            key: 'avatar-user1.png',
+            filename: 'avatar-user1.png',
+            mimetype: 'image/png',
+            size: 512,
+            uploaded_by: user1.id,
+        },
+    });
+
+    const avatarFile2 = await prisma.file.create({
+        data: {
+            key: 'avatar-user2.png',
+            filename: 'avatar-user2.png',
+            mimetype: 'image/png',
+            size: 512,
+            uploaded_by: user2.id,
         },
     });
 

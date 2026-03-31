@@ -1,4 +1,4 @@
-import { validationResult, body, param } from 'express-validator';
+import { validationResult, body, param, query } from 'express-validator';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import multer from 'multer';
 import path from 'path';
@@ -10,14 +10,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Configure Multer for memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
     storage,
     limits: {
-        fileSize: 500 * 1024 * 1024, // Limit file size to 500 MB
+        fileSize: 500 * 1024 * 1024,
     },
     fileFilter: (req, file, cb) => {
         const allowedTypes = [
@@ -27,9 +26,27 @@ const upload = multer({
             'application/msword', // .doc
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
             'image/png', // .png
+            'image/jpeg', // .jpg, .jpeg
+            'image/jpg', // .jpg
+            'image/gif', // .gif
         ];
         if (!allowedTypes.includes(file.mimetype)) {
-            return cb(new Error('Only .zip, .pdf, .mp4, .doc, .docx, and .png files are allowed'));
+            return cb(new Error('Only .zip, .pdf, .mp4, .doc, .docx, .png, .jpg, .jpeg, and .gif files are allowed'));
+        }
+        cb(null, true);
+    },
+});
+
+// Multer configuration for avatar uploads
+const avatarUpload = multer({
+    storage: multer.memoryStorage(), // Use memory storage
+    limits: {
+        fileSize: 5 * 1024 * 1024, // Limit file size to 5 MB
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            return cb(new Error('Only image files are allowed for avatars'));
         }
         cb(null, true);
     },
@@ -45,65 +62,82 @@ const wasabiClient = new S3Client({
     },
 });
 
-// Helper function to generate a signed URL
-const generateSignedUrl = async (fileUrl) => {
-    // Extract the file key from the full URL
-    const fileKey = fileUrl.split('/').pop();
-
+// Generate a signed URL for accessing private files
+const generateSignedUrl = async (fileKey) => {
     const params = {
         Bucket: process.env.WASABI_BUCKET_NAME,
         Key: fileKey,
     };
     const command = new GetObjectCommand(params);
-    return await getSignedUrl(wasabiClient, command, { expiresIn: 24 * 60 * 60 }); // 24 hours
+    return await getSignedUrl(wasabiClient, command, { expiresIn: 24 * 60 * 60 });
 };
 
 // Upload a file to Wasabi
-const uploadToWasabi = async (file) => {
+const uploadToWasabi = async ({ file, fileKey }) => {
     const params = {
         Bucket: process.env.WASABI_BUCKET_NAME,
-        Key: `${Date.now()}-${file.originalname}`, // Unique file name
-        Body: file.buffer, // File content
-        ContentType: file.mimetype, // File MIME type
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
     };
 
     const command = new PutObjectCommand(params);
     await wasabiClient.send(command);
 
-    // Return the full URL
-    return `https://${process.env.WASABI_BUCKET_NAME}.${process.env.WASABI_ENDPOINT.replace('https://', '')}/${params.Key}`;
+    return fileKey;
 };
 
-// Upload a file
+
 const uploadFile = [
     upload.single('file'),
     async (req, res) => {
         try {
-            // Check if a file was uploaded
             if (!req.file) {
                 return res.status(400).json({ error: 'No file uploaded' });
             }
 
-            // Upload the file to Wasabi
-            const fileUrl = await uploadToWasabi(req.file);
+            let fileKey = `${Date.now()}-${req.file.originalname}`;
+            fileKey = fileKey.replace(/\s+/g, '-'); // Replace spaces with hyphens
 
-            // Extract additional metadata
-            const { uploaded_by } = req.body;
+            const sanitizedKey = await uploadToWasabi({ file: req.file, fileKey });
 
-            // Save file metadata to the database
             const file = await fileService.uploadFile({
-                url: fileUrl, // Save the full URL
-                uploaded_by: parseInt(uploaded_by),
+                key: sanitizedKey,
+                uploaded_by: req.user.id,
                 filename: req.file.originalname,
                 mimetype: req.file.mimetype,
                 size: req.file.size,
             });
 
-            // Return the file metadata and URL
             res.status(201).json(file);
         } catch (error) {
             console.error('Error uploading file:', error);
             res.status(500).json({ error: 'Failed to upload file' });
+        }
+    },
+];
+
+// Upload avatar file
+const uploadAvatarFile = [
+    avatarUpload.single('avatar'),
+    async (req, res) => {
+        try {
+            const file = req.file;
+
+            if (!file) {
+                return res.status(400).json({ error: 'No avatar file uploaded' });
+            }
+
+            // Use fileService.uploadUserAvatar to handle both file upload and user update
+            const updatedUser = await fileService.uploadUserAvatar(req.user.id, file);
+
+            res.status(201).json({
+                message: 'Avatar uploaded successfully',
+                user: updatedUser,
+            });
+        } catch (error) {
+            console.error('Error uploading avatar file:', error);
+            res.status(500).json({ error: 'Failed to upload avatar file' });
         }
     },
 ];
@@ -116,14 +150,14 @@ const getAllFiles = async (req, res) => {
         // Generate signed URLs for all files
         const filesWithSignedUrls = await Promise.all(
             files.map(async (file) => {
-                const signedUrl = await generateSignedUrl(file.url);
+                const signedUrl = await generateSignedUrl(file.key);
                 return { ...file, signedUrl };
             })
         );
 
         res.status(200).json(filesWithSignedUrls);
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching files:', error);
         res.status(500).json({ error: 'Failed to fetch files' });
     }
 };
@@ -146,7 +180,7 @@ const getFileById = [
             }
 
             // Generate a signed URL for the file
-            const signedUrl = await generateSignedUrl(file.url);
+            const signedUrl = await generateSignedUrl(file.key);
 
             res.status(200).json({ ...file, signedUrl });
         } catch (error) {
@@ -289,8 +323,36 @@ const updateFileByAssignmentId = [
     },
 ];
 
+// Get file access by file key
+const getFileAccessByFileKey = [
+    query('fileKey').isString().withMessage('File key must be provided'),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { fileKey } = req.query;
+
+        try {
+            const expiresIn = 24 * 60 * 60; // 24 hours in seconds
+            const signedUrl = await generateSignedUrl(fileKey);
+            const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+            res.status(200).json({
+                signedUrl,
+                expiresAt,
+            });
+        } catch (error) {
+            console.error('Error generating signed URL:', error);
+            res.status(500).json({ error: 'Failed to generate signed URL' });
+        }
+    },
+];
+
 export default {
     uploadFile,
+    uploadAvatarFile,
     getAllFiles,
     getFileById,
     deleteFile,
@@ -303,4 +365,5 @@ export default {
     updateFileByContentId,
     updateFileByNotificationId,
     updateFileByAssignmentId,
+    getFileAccessByFileKey,
 };
