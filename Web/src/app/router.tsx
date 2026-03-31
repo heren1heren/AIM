@@ -60,7 +60,7 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: "/classes/teacher/:id",
+                path: "/teacher/:id/classes",
                 element: (
                     <ProtectedRoute allowedRoles={["teacher"]}>
                         <ManageClassesPage />

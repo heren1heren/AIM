@@ -163,9 +163,6 @@ export const useClass = () => {
             setLoading(false);
         }
     };
-    useEffect(() => {
-        fetchClasses();
-    }, []);
 
 
     return {

@@ -24,7 +24,7 @@ export default function ShareLayout() {
     ];
 
     const teacherTools = [
-        { text: "My Classes", onClick: () => navigate("/classes") },
+        { text: "My Classes", onClick: () => navigate("/teacher/:id/classes") },
     ];
 
     const studentTools = [

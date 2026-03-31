@@ -6,7 +6,7 @@ import api from "../../../services/api";
 import { useAuth } from "../../../hooks/AuthContext"; // Import useAuth
 
 export default function SignInPage() {
-    const { setAccessToken, setRoles } = useAuth(); // Use AuthContext to set accessToken and roles
+    const { setAccessToken, setRoles, setUserId } = useAuth(); // Use AuthContext to set accessToken, roles, and userId
     const navigate = useNavigate();
 
     const [username, setUsername] = useState("");
@@ -22,10 +22,11 @@ export default function SignInPage() {
 
             console.log("Backend Response:", response.data); // Log the backend response
 
-            const { accessToken, roles } = response.data;
+            const { accessToken, roles, userId } = response.data;
 
             setAccessToken(accessToken);
             setRoles(roles);
+            setUserId(userId); // Set the userId in AuthContext
 
             navigate("/");
         } catch (error) {

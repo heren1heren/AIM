@@ -1,25 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Typography, Avatar, Paper, Button, Divider, Dialog, DialogTitle, DialogContent, TextField, DialogActions, IconButton } from "@mui/material";
-import { useAuth } from "../../../hooks/AuthContext"; // Assuming you have an AuthContext for user data
+import { useAuth } from "../../../hooks/AuthContext";
+import { useUsers } from "../../../hooks/useUsers";
+import { useFile } from "../../../hooks/useFile";
 
 export default function UserProfilePage() {
-    // Mock user data (replace with real data from context or API)
-    const { userId } = useAuth(); // Example: Get user data from AuthContext
-    const [user, setUser] = useState({
-        id: userId || 1,
-        name: "John Doe",
-        bio: "This is a short bio about the user.",
-        joinedDate: "2023-01-15",
-        avatar: "", // Avatar URL or base64 string
-    });
+    const { userId } = useAuth();
+    const { userProfile, getUserProfileById, updateUserProfile } = useUsers();
+    const { handleUploadAvatarFile, fetchFileAccessByFileKey } = useFile();
 
-    const [editDialogOpen, setEditDialogOpen] = useState(false); // State for edit dialog
-    const [editForm, setEditForm] = useState({ name: user.name, bio: user.bio }); // State for form fields
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ name: "", bio: "" });
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch user profile on component mount
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            setLoading(true);
+            const profile = await getUserProfileById(userId);
+            console.log("Fetched userProfile:", profile);
+            setLoading(false);
+        };
+
+        fetchUserProfile();
+    }, []);
+
+    // Fetch the signed URL for the avatar
+    useEffect(() => {
+        const fetchAvatarUrl = async () => {
+            if (userProfile?.avatarKey) {
+                try {
+                    console.log("Fetching signed URL for fileKey:", userProfile.avatarKey); // Debugging
+                    const { signedUrl } = await fetchFileAccessByFileKey(userProfile.avatarKey);
+                    console.log("Signed URL fetched:", signedUrl); // Debugging
+                    setAvatarUrl(signedUrl);
+                } catch (error) {
+                    console.error("Error in fetchFileAccessByFileKey:", error);
+                }
+            }
+        };
+
+        fetchAvatarUrl();
+    }, [userProfile, fetchFileAccessByFileKey]);
 
     // Open the edit dialog
     const handleEditClick = () => {
-        setEditForm({ name: user.name, bio: user.bio }); // Pre-fill the form with current data
-        setEditDialogOpen(true);
+        if (userProfile) {
+            setEditForm({ name: userProfile.name, bio: userProfile.bio || "" });
+            setEditDialogOpen(true);
+        }
     };
 
     // Close the edit dialog
@@ -28,24 +58,31 @@ export default function UserProfilePage() {
     };
 
     // Save changes to the user profile
-    const handleSaveChanges = () => {
-        setUser((prev) => ({ ...prev, ...editForm })); // Update user data
-        setEditDialogOpen(false); // Close the dialog
+    const handleSaveChanges = async () => {
+        const updatedProfile = { name: editForm.name, bio: editForm.bio };
+        await updateUserProfile(userId, updatedProfile);
+        setEditDialogOpen(false);
     };
 
     // Handle avatar upload
-    const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
+            const file = event.target.files[0]; // Browser File object
 
-            reader.onload = () => {
-                setUser((prev) => ({ ...prev, avatar: reader.result as string })); // Update avatar with base64 string
-            };
-
-            reader.readAsDataURL(file); // Convert file to base64 string
+            try {
+                const uploadedAvatar = await handleUploadAvatarFile(file); // Upload the avatar
+                await updateUserProfile(userId, { avatarKey: uploadedAvatar.key }); // Update the avatarKey in the user profile
+                const { signedUrl } = await fetchFileAccessByFileKey(uploadedAvatar.key); // Fetch the signed URL for the new avatar
+                setAvatarUrl(signedUrl); // Update the avatar URL in the state
+            } catch (error) {
+                console.error("Failed to upload avatar:", error);
+            }
         }
     };
+
+    if (loading || !userProfile) {
+        return <Typography>Loading...</Typography>;
+    }
 
     return (
         <Box sx={{ p: 3 }}>
@@ -55,20 +92,20 @@ export default function UserProfilePage() {
                     <IconButton component="label">
                         <Avatar
                             sx={{ width: 64, height: 64, mr: 2 }}
-                            src={user.avatar} // Display uploaded avatar
+                            src={avatarUrl || undefined}
                         >
-                            {!user.avatar && user.name.charAt(0)} {/* Fallback to initials */}
+                            {!avatarUrl && userProfile.name.charAt(0)} {/* Fallback to initials */}
                         </Avatar>
                         <input
                             type="file"
                             accept="image/*"
                             hidden
-                            onChange={handleAvatarChange} // Handle avatar upload
+                            onChange={handleAvatarChange}
                         />
                     </IconButton>
                     <Box>
                         <Typography variant="h5" fontWeight={600}>
-                            {user.name}
+                            {userProfile.name}
                         </Typography>
                     </Box>
                 </Box>
@@ -78,10 +115,7 @@ export default function UserProfilePage() {
                 {/* User Details */}
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="body1">
-                        <strong>Joined:</strong> {new Date(user.joinedDate).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body1">
-                        <strong>Bio:</strong> {user.bio}
+                        <strong>Bio:</strong> {userProfile.bio || "No bio set"}
                     </Typography>
                 </Box>
 
@@ -91,9 +125,6 @@ export default function UserProfilePage() {
                 <Box>
                     <Button variant="contained" color="primary" sx={{ mr: 2 }} onClick={handleEditClick}>
                         Edit Profile
-                    </Button>
-                    <Button variant="outlined" color="error">
-                        Delete Account
                     </Button>
                 </Box>
             </Paper>
