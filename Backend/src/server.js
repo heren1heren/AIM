@@ -15,7 +15,7 @@ import classRoutes from "./routes/classes.js";
 import contentRoutes from "./routes/contents.js";
 import conversationRoutes from "./routes/conversations.js";
 import messageRoutes from "./routes/messages.js"
-import fileRoutes from "./routes/files.js";
+
 import notificationRoutes from "./routes/notifications.js";
 
 import studentRoutes from "./routes/students.js";
@@ -56,7 +56,7 @@ app.use("/classes", classRoutes);
 app.use("/contents", contentRoutes);
 app.use("/conversations", conversationRoutes);
 app.use("/messages", messageRoutes)
-app.use("/files", fileRoutes);
+
 app.use("/notifications", notificationRoutes);
 
 app.use("/students", studentRoutes);

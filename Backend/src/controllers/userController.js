@@ -1,6 +1,8 @@
 import { validationResult, body, param } from 'express-validator';
 import multer from 'multer';
 import userService from '../services/userService.js';
+import { avatarUpload, generateSignedUrl, uploadToWasabi } from '../config/fileConfig.js';
+import fileService from '../services/fileService.js';
 
 
 // Create a user
@@ -177,9 +179,9 @@ const deleteUser = [
 
 // Update avatarUrl, bio, or name
 const updateUserProfile = [
+    avatarUpload.single('avatar'),
     param('id').isInt().withMessage('User ID must be a valid integer'),
     body('name').optional().isString().withMessage('Name must be a string'),
-    body('avatarKey').optional().isString().withMessage('Avatar key must be a string'),
     body('bio').optional().isString().withMessage('Bio must be a string'),
 
     async (req, res) => {
@@ -189,22 +191,54 @@ const updateUserProfile = [
         }
 
         const { id } = req.params;
-        const { name, avatarKey, bio } = req.body;
+        const { name, bio } = req.body;
 
         try {
+            let avatarKey;
+            let signedAvatarUrl;
+
+            if (req.file) {
+                const fileKey = `${Date.now()}-${req.file.originalname}`;
+                console.log('Generated fileKey:', fileKey);
+
+                // Upload the file to Wasabi
+                await uploadToWasabi({ file: req.file, fileKey });
+
+                // Save the file metadata in the database
+                const savedFile = await fileService.uploadUserAvatar(parseInt(id), {
+                    key: fileKey,
+                    filename: req.file.originalname,
+                    mimetype: req.file.mimetype,
+                    size: req.file.size,
+                });
+
+                console.log('Saved file metadata:', savedFile);
+                avatarKey = fileKey;
+
+                // Generate the signed URL for the avatar
+                signedAvatarUrl = await generateSignedUrl(fileKey)
+            }
+
+            // Update the user's profile
             const updatedUser = await userService.updateUserProfile(parseInt(id), {
                 name,
-                avatarKey,
                 bio,
+                avatarKey,
             });
-            res.status(200).json(updatedUser);
+
+            res.status(200).json({
+                message: 'Profile updated successfully',
+                user: {
+                    ...updatedUser,
+                    avatarUrl: signedAvatarUrl, // Include the signed URL in the response
+                },
+            });
         } catch (error) {
             console.error('Error updating user profile:', error);
             res.status(500).json({ error: 'Failed to update user profile' });
         }
     },
 ];
-
 
 
 export default {

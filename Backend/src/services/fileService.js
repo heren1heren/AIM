@@ -60,7 +60,8 @@ const deleteFile = async (id) => {
 
 const uploadUserAvatar = async (userId, file) => {
     try {
-        const fileKey = `${Date.now()}-${file.originalname}`;
+        const fileKey = file.key;
+        console.log('FileKey:', fileKey);
 
         // Save the file metadata
         const savedFile = await prisma.file.create({
@@ -73,16 +74,8 @@ const uploadUserAvatar = async (userId, file) => {
             },
         });
 
-        // Update the user's avatarKey
-        const updatedUser = await prisma.user.update({
-            where: { id: parseInt(userId) },
-            data: {
-                avatarKey: savedFile.key,
-                updated_at: new Date(),
-            },
-        });
 
-        return updatedUser;
+        return { savedFile };
     } catch (error) {
         console.error('Error uploading user avatar:', error);
         throw new Error('Failed to upload user avatar');

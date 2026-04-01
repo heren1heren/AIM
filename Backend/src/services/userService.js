@@ -13,7 +13,7 @@ const createUser = async ({ name, username, password, isAdmin, isTeacher, isStud
         username,
         password_hash, // Store the hashed password
         created_at: new Date(),
-        avatarKey,
+        avatarKey, // Use avatarKey instead of avatarUrl
         bio,
     };
 
@@ -57,7 +57,7 @@ const getUserById = async (id) => {
     });
 };
 
-const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, bio, ...userData }) => {
+const updateUser = async (id, { name, addRole, removeRole, password, avatarKey, bio, ...userData }) => {
     if (password) {
         const password_hash = await bcrypt.hash(password, 10);
         userData.password_hash = password_hash;
@@ -66,7 +66,13 @@ const updateUser = async (id, { name, addRole, removeRole, password, avatarUrl, 
     // Update the user details
     const updatedUser = await prisma.user.update({
         where: { id: parseInt(id) },
-        data: userData,
+        data: {
+            name,
+            avatarKey, // Update avatarKey instead of avatarUrl
+            bio,
+            ...userData,
+            updated_at: new Date(),
+        },
     });
 
     if (addRole === 'admin') {
@@ -129,7 +135,7 @@ const getUserProfileById = async (id) => {
             id: true,
             name: true,
             username: true,
-            avatarUrl: true,
+            avatarKey: true, // Return avatarKey instead of avatarUrl
             bio: true,
             created_at: true,
             updated_at: true,
@@ -143,7 +149,7 @@ const updateUserProfile = async (id, { name, avatarKey, bio }) => {
         where: { id: parseInt(id) },
         data: {
             name,
-            avatarKey,
+            avatarKey, // Update avatarKey instead of avatarUrl
             bio,
             updated_at: new Date(),
         },

@@ -8,7 +8,7 @@ const login = async (req, res) => {
         const { user, roles } = await authService.verifyCredentials(username, password);
 
 
-        const accessToken = authService.generateToken(user, roles, 1800, "30m"); // E
+        const accessToken = authService.generateToken(user, roles, "7d"); // E
 
         const refreshToken = authService.generateToken(user, roles, "7d"); // Expires in 7 days
 
