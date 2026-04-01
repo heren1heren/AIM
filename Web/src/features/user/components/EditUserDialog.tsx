@@ -6,7 +6,6 @@ import {
     DialogActions,
     TextField,
     Button,
-
 } from "@mui/material";
 
 interface EditUserDialogProps {
@@ -15,8 +14,6 @@ interface EditUserDialogProps {
     onSubmit: () => void;
     name: string;
     setName: (value: string) => void;
-    nickname: string;
-    setNickname: (value: string) => void;
     username: string;
     setUsername: (value: string) => void;
     password: string;
@@ -31,14 +28,11 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
     onSubmit,
     name,
     setName,
-    nickname,
-    setNickname,
     username,
     setUsername,
     password,
     setPassword,
 }) => {
-
     return (
         <Dialog open={open} onClose={onClose}>
             <DialogTitle>Edit User</DialogTitle>
@@ -47,13 +41,6 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
                     label="Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    fullWidth
-                    margin="dense"
-                />
-                <TextField
-                    label="Nickname"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
                     fullWidth
                     margin="dense"
                 />
@@ -73,13 +60,12 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({
                     margin="dense"
                     helperText="Leave blank to keep the current password"
                 />
-
             </DialogContent>
             <DialogActions>
                 <Button onClick={onClose} color="secondary">
                     Cancel
                 </Button>
-                <Button onClick={onSubmit} color="primary" >
+                <Button onClick={onSubmit} color="primary">
                     Save
                 </Button>
             </DialogActions>

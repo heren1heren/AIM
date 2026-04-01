@@ -5,6 +5,7 @@ export interface User {
     name: string; // User's name
     username: string; // User's username
     avatarKey?: string; // User's avatar key (replaces avatarUrl)
+    avatarUrl?: string; // Add avatarUrl to the User interface
     bio?: string; // User's bio
     isAdmin: boolean;
     isTeacher: boolean;
@@ -13,7 +14,8 @@ export interface User {
 
 export interface UserProfile {
     name: string;
-    avatarKey?: string; // Avatar key for fetching signed URL
+    avatarKey?: string;
+    avatarUrl?: string; // Add avatarUrl to the UserProfile interface
     bio?: string;
 }
 
@@ -32,7 +34,7 @@ export interface UpdateUserInput {
     name?: string;
     username?: string;
     password?: string;
-    avatarKey?: string; // Optional avatar key
+
     bio?: string;
     addRole?: "admin" | "teacher";
     removeRole?: "admin" | "teacher";
@@ -40,7 +42,7 @@ export interface UpdateUserInput {
 
 export interface UpdateUserProfileInput {
     name?: string;
-    avatarKey?: string; // Optional avatar key
+    file?: File;
     bio?: string;
 }
 
@@ -73,16 +75,20 @@ export const deleteUser = async (id: number): Promise<void> => {
     await api.delete(`/users/${id}`);
 };
 
-// Update user profile (name, bio, or avatarKey)
+// Update user profile (including avatar upload)
 export const updateUserProfile = async (
     id: number,
-    updatedData: UpdateUserProfileInput
-): Promise<User> => {
-    const response = await api.patch(`/users/${id}/profile`, updatedData); // Use PATCH for partial updates
-    return response.data;
+    updatedData: UpdateUserProfileInput // Use FormData to handle file uploads
+): Promise<UserProfile> => {
+    const response = await api.patch(`/users/${id}/profile`, updatedData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return response.data.user; // Return the updated user profile from the response
 };
 
-// Get user profile by ID (only name, bio, and avatarKey)
+// Get user profile by ID
 export const getUserProfileById = async (id: number): Promise<UserProfile> => {
     const response = await api.get(`/users/${id}/profile`);
     return response.data;

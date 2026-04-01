@@ -15,8 +15,6 @@ interface AddUserDialogProps {
     onSubmit: () => void;
     name: string;
     setName: (value: string) => void;
-    nickname: string;
-    setNickname: (value: string) => void;
     username: string;
     setUsername: (value: string) => void;
     password: string;
@@ -31,8 +29,6 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
     onSubmit,
     name,
     setName,
-    nickname,
-    setNickname,
     username,
     setUsername,
     password,
@@ -40,7 +36,7 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
     role,
     setRole,
 }) => {
-    const isFormValid = name && nickname && username && password && role;
+    const isFormValid = name && username && password && role;
 
     return (
         <Dialog open={open} onClose={onClose}>
@@ -50,13 +46,6 @@ const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     label="Name *"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    fullWidth
-                    margin="dense"
-                />
-                <TextField
-                    label="Nickname *"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
                     fullWidth
                     margin="dense"
                 />

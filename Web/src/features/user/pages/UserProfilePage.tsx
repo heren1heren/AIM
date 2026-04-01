@@ -1,50 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Typography, Avatar, Paper, Button, Divider, Dialog, DialogTitle, DialogContent, TextField, DialogActions, IconButton } from "@mui/material";
 import { useAuth } from "../../../hooks/AuthContext";
 import { useUsers } from "../../../hooks/useUsers";
-import { useFile } from "../../../hooks/useFile";
 
 export default function UserProfilePage() {
     const { userId } = useAuth();
-    const { userProfile, getUserProfileById, updateUserProfile } = useUsers();
-    const { handleUploadAvatarFile, fetchFileAccessByFileKey } = useFile();
+    const { useUserProfile, updateUserProfile } = useUsers();
+    const { data: userProfile, isLoading } = useUserProfile(userId);
 
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editForm, setEditForm] = useState({ name: "", bio: "" });
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    // Fetch user profile on component mount
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-            setLoading(true);
-            const profile = await getUserProfileById(userId);
-            console.log("Fetched userProfile:", profile);
-            setLoading(false);
-        };
-
-        fetchUserProfile();
-    }, []);
-
-    // Fetch the signed URL for the avatar
-    useEffect(() => {
-        const fetchAvatarUrl = async () => {
-            if (userProfile?.avatarKey) {
-                try {
-                    console.log("Fetching signed URL for fileKey:", userProfile.avatarKey); // Debugging
-                    const { signedUrl } = await fetchFileAccessByFileKey(userProfile.avatarKey);
-                    console.log("Signed URL fetched:", signedUrl); // Debugging
-                    setAvatarUrl(signedUrl);
-                } catch (error) {
-                    console.error("Error in fetchFileAccessByFileKey:", error);
-                }
-            }
-        };
-
-        fetchAvatarUrl();
-    }, [userProfile, fetchFileAccessByFileKey]);
-
-    // Open the edit dialog
     const handleEditClick = () => {
         if (userProfile) {
             setEditForm({ name: userProfile.name, bio: userProfile.bio || "" });
@@ -52,35 +18,29 @@ export default function UserProfilePage() {
         }
     };
 
-    // Close the edit dialog
     const handleDialogClose = () => {
         setEditDialogOpen(false);
     };
 
-    // Save changes to the user profile
     const handleSaveChanges = async () => {
-        const updatedProfile = { name: editForm.name, bio: editForm.bio };
-        await updateUserProfile(userId, updatedProfile);
+        const updatedProfile = new FormData();
+        updatedProfile.append("name", editForm.name);
+        updatedProfile.append("bio", editForm.bio);
+
+        await updateUserProfile({ id: userId, updatedData: updatedProfile });
         setEditDialogOpen(false);
     };
 
-    // Handle avatar upload
     const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0]; // Browser File object
-
-            try {
-                const uploadedAvatar = await handleUploadAvatarFile(file); // Upload the avatar
-                await updateUserProfile(userId, { avatarKey: uploadedAvatar.key }); // Update the avatarKey in the user profile
-                const { signedUrl } = await fetchFileAccessByFileKey(uploadedAvatar.key); // Fetch the signed URL for the new avatar
-                setAvatarUrl(signedUrl); // Update the avatar URL in the state
-            } catch (error) {
-                console.error("Failed to upload avatar:", error);
-            }
+            const file = event.target.files[0];
+            const formData = new FormData();
+            formData.append("avatar", file);
+            await updateUserProfile({ id: userId, updatedData: formData });
         }
     };
 
-    if (loading || !userProfile) {
+    if (isLoading || !userProfile) {
         return <Typography>Loading...</Typography>;
     }
 
@@ -92,9 +52,9 @@ export default function UserProfilePage() {
                     <IconButton component="label">
                         <Avatar
                             sx={{ width: 64, height: 64, mr: 2 }}
-                            src={avatarUrl || undefined}
+                            src={userProfile.avatarUrl || undefined}
                         >
-                            {!avatarUrl && userProfile.name.charAt(0)} {/* Fallback to initials */}
+                            {!userProfile.avatarUrl && userProfile.name.charAt(0)} {/* Fallback to initials */}
                         </Avatar>
                         <input
                             type="file"

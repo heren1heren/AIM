@@ -1,48 +1,16 @@
 import { Avatar, Button, IconButton, Menu, MenuItem } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsers } from "../../hooks/useUsers";
-import { getFileAccessByFileKey } from "../../services/fileService";
+import { useAuth } from "../../hooks/AuthContext";
 
 export default function ProfileLogin() {
     const navigate = useNavigate();
-    const { userProfile, getUserProfileById } = useUsers(); // Fetch userProfile from useUsers
+    const { accessToken, setAccessToken, userId } = useAuth();
+    const { useUserProfile } = useUsers();
+    const { data: userProfile, isLoading } = useUserProfile(userId); // Replace `1` with the logged-in user's ID
 
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null); // State for the avatar URL
-
-    // Fetch the user profile when the component mounts
-    useEffect(() => {
-        const fetchUserProfile = async () => {
-            try {
-                await getUserProfileById(1); // Replace `1` with the logged-in user's ID
-            } catch (error) {
-                console.error("Failed to fetch user profile:", error);
-            }
-        };
-
-        fetchUserProfile();
-    }, []);
-
-    // Fetch the signed URL for the avatar
-    useEffect(() => {
-        const fetchAvatarUrl = async () => {
-            if (userProfile?.avatarKey) {
-                try {
-                    console.log("Fetching signed URL for avatarKey:", userProfile.avatarKey); // Debugging
-                    const { signedUrl } = await getFileAccessByFileKey(userProfile.avatarKey);
-                    console.log("Signed URL fetched:", signedUrl); // Debugging
-                    setAvatarUrl(signedUrl); // Set the signed URL for the avatar
-                } catch (error) {
-                    console.error("Failed to fetch avatar URL:", error);
-                }
-            } else {
-                console.log("No avatarKey found in userProfile."); // Debugging
-            }
-        };
-
-        fetchAvatarUrl();
-    }, [userProfile]); // Run when userProfile changes
 
     const openMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -63,23 +31,26 @@ export default function ProfileLogin() {
             // Clear the access token in the AuthContext
             setAccessToken(null);
 
-            // Redirect to the login page
             navigate("/");
         } catch (error) {
             console.error("Logout failed:", error);
         }
     };
 
-    if (userProfile) {
+    if (isLoading) {
+        return null;
+    }
+
+    if (accessToken && userProfile) {
         // Render profile menu if logged in
         return (
             <>
                 <IconButton color="inherit" onClick={openMenu}>
                     <Avatar
                         sx={{ width: 32, height: 32 }}
-                        src={avatarUrl || undefined} // Use the signed URL for the avatar
+                        src={userProfile.avatarUrl || undefined} // Use avatarUrl directly from userProfile
                     >
-                        {!avatarUrl && userProfile?.name?.charAt(0)} {/* Fallback to initials */}
+                        {!userProfile.avatarUrl && userProfile?.name?.charAt(0)} {/* Fallback to initials */}
                     </Avatar>
                 </IconButton>
                 <Menu

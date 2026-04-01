@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUsers } from "../../../hooks/useUsers";
 import {
     Box,
@@ -11,31 +11,24 @@ import {
     TableRow,
     Paper,
     Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-    MenuItem,
 } from "@mui/material";
 
 import AddUserDialog from "../components/AddUserDialog";
 import EditUserDialog from "../components/EditUserDialog";
 import DeleteUserDialog from "../components/DeleteUserDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ManageUsersPage() {
-    const { users, loading, error, createUser, updateUser, deleteUser, fetchUsers } = useUsers();
-
+    const { users, usersLoading, usersError, createUser, updateUser, deleteUser } = useUsers();
+    const queryClient = useQueryClient();
 
     const [name, setName] = useState("");
-    const [nickname, setNickname] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("student");
 
     // Edit User State
     const [editName, setEditName] = useState("");
-    const [editNickname, setEditNickname] = useState("");
     const [editUsername, setEditUsername] = useState("");
     const [editPassword, setEditPassword] = useState("");
     const [editRole, setEditRole] = useState("student");
@@ -54,46 +47,42 @@ export default function ManageUsersPage() {
             isTeacher: role === "teacher",
         };
 
-        console.log("Sending user data to createUser:", {
-            name,
-            username,
-            password,
-            profile: { nickname },
-            ...roleData,
-        }); // Debugging log
-
         await createUser({
             name,
             username,
             password,
-            profile: { nickname },
             ...roleData,
         });
 
+        // Invalidate the "users" query to trigger a refetch
+        queryClient.invalidateQueries(["users"]);
+
         // Reset fields
         setName("");
-        setNickname("");
         setUsername("");
         setPassword("");
         setRole("student");
         setOpenAddDialog(false);
-        await fetchUsers();
     };
 
     // Handle Edit User
     const handleEditUser = async () => {
         if (selectedUserId !== null) {
-            await updateUser(selectedUserId, {
-                name: editName,
-                username: editUsername,
-                password: editPassword,
-                profile: { nickname: editNickname },
+            await updateUser({
+                id: selectedUserId,
+                updatedData: {
+                    name: editName,
+                    username: editUsername,
+                    password: editPassword,
+                },
             });
+
+            // Invalidate the "users" query to trigger a refetch
+            queryClient.invalidateQueries(["users"]);
         }
 
         // Reset fields
         setEditName("");
-        setEditNickname("");
         setEditUsername("");
         setEditPassword("");
         setEditRole("student");
@@ -110,6 +99,9 @@ export default function ManageUsersPage() {
     const handleConfirmDelete = async () => {
         if (userToDelete !== null) {
             await deleteUser(userToDelete);
+
+            // Invalidate the "users" query to trigger a refetch
+            queryClient.invalidateQueries(["users"]);
         }
         setUserToDelete(null);
         setOpenDeleteDialog(false);
@@ -124,7 +116,6 @@ export default function ManageUsersPage() {
     const openEditDialogForUser = (user: any) => {
         setSelectedUserId(user.id);
         setEditName(user.name || "");
-        setEditNickname(user.profile?.nickname || "");
         setEditUsername(user.username);
         setEditPassword("");
         setEditRole(user.teacher ? "teacher" : "student");
@@ -153,8 +144,8 @@ export default function ManageUsersPage() {
                 Add User
             </Button>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>{error}</p>}
+            {usersLoading && <p>Loading...</p>}
+            {usersError && <p>Error loading users</p>}
 
             <TableContainer component={Paper}>
                 <Table>
@@ -162,9 +153,6 @@ export default function ManageUsersPage() {
                         <TableRow>
                             <TableCell>
                                 <Typography fontWeight={600}>Name</Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography fontWeight={600}>Nickname</Typography>
                             </TableCell>
                             <TableCell>
                                 <Typography fontWeight={600}>Username</Typography>
@@ -178,10 +166,9 @@ export default function ManageUsersPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {users.map((user) => (
+                        {users?.map((user) => (
                             <TableRow key={user.id}>
                                 <TableCell>{user.name || "N/A"}</TableCell>
-                                <TableCell>{user.profile?.nickname || "N/A"}</TableCell>
                                 <TableCell>{user.username}</TableCell>
                                 <TableCell>{getRole(user)}</TableCell>
                                 <TableCell align="right">
@@ -209,15 +196,12 @@ export default function ManageUsersPage() {
                 </Table>
             </TableContainer>
 
-
             <AddUserDialog
                 open={openAddDialog}
                 onClose={() => setOpenAddDialog(false)}
                 onSubmit={handleCreateUser}
                 name={name}
                 setName={setName}
-                nickname={nickname}
-                setNickname={setNickname}
                 username={username}
                 setUsername={setUsername}
                 password={password}
@@ -232,8 +216,6 @@ export default function ManageUsersPage() {
                 onSubmit={handleEditUser}
                 name={editName}
                 setName={setEditName}
-                nickname={editNickname}
-                setNickname={setEditNickname}
                 username={editUsername}
                 setUsername={setEditUsername}
                 password={editPassword}

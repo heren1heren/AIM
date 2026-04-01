@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     fetchUsers as fetchUsersService,
     createUser as createUserService,
@@ -8,153 +8,82 @@ import {
     getUserProfileById as getUserProfileByIdService,
     updateUserProfile as updateUserProfileService,
     type User,
-    type UserProfile,
     type CreateUserInput,
     type UpdateUserInput,
+    type UpdateUserProfileInput,
 } from "../services/userService";
 
 export const useUsers = () => {
-    const [users, setUsers] = useState<User[]>([]);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null); // State for user profile
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
     // Fetch all users
-    const fetchUsers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await fetchUsersService();
-            setUsers(data);
-        } catch (err) {
-            setError("Failed to fetch users");
-            console.error("Fetch Users Error:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: users, isLoading: usersLoading, isError: usersError } = useQuery({
+        queryKey: ["users"],
+        queryFn: fetchUsersService,
+    });
+
+    // Fetch user profile by ID
+    const useUserProfile = (id: number) =>
+        useQuery({
+            queryKey: ["userProfile", id],
+            queryFn: () => getUserProfileByIdService(id),
+            staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+        });
 
     // Create a new user
-    const createUser = async (newUser: CreateUserInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const createdUser = await createUserService(newUser);
-            setUsers((prev) => [...prev, createdUser]);
-        } catch (err) {
-            setError("Failed to create user");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const createUser = useMutation({
+        mutationFn: (newUser: CreateUserInput) => createUserService(newUser),
+        onSuccess: (createdUser) => {
+            queryClient.setQueryData(["users"], (oldUsers: User[] | undefined) => [
+                ...(oldUsers || []),
+                createdUser,
+            ]);
+        },
+    });
 
-    // Get a user by ID
-    const getUserById = async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            return await getUserByIdService(id);
-        } catch (err) {
-            setError("Failed to fetch user");
-            console.error(err);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch user profile by ID (only name, bias, and avatarUrl)
-    const getUserProfileById = async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const profile = await getUserProfileByIdService(id);
-            setUserProfile(profile); // Store the profile in state
-            return profile;
-        } catch (err) {
-            setError("Failed to fetch user profile");
-            console.error(err);
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
-    const updateUserProfile = async (
-        id: number,
-        updatedProfile: UserProfile
-    ) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const updatedUser = await updateUserProfileService(id, updatedProfile);
-            setUserProfile((prev) => ({ ...prev, ...updatedProfile }));
-            setUsers((prev) =>
-                prev.map((user) =>
-                    user.id === id
-                        ? { ...user, ...updatedProfile }
-                        : user
-                )
-            );
-            return updatedUser;
-        } catch (err) {
-            setError("Failed to update user profile");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Update user profile (including file upload)
+    const updateUserProfile = useMutation({
+        mutationFn: ({ id, updatedData }: { id: number; updatedData: UpdateUserProfileInput }) =>
+            updateUserProfileService(id, updatedData),
+        onSuccess: (updatedProfile, { id }) => {
+            queryClient.setQueryData(["userProfile", id], (oldProfile: any) => ({
+                ...oldProfile,
+                ...updatedProfile,
+            }));
+        },
+    });
 
     // Update a user
-    const updateUser = async (id: number, updatedData: UpdateUserInput) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const updatedUser = await updateUserService(id, updatedData);
-            setUsers((prev) =>
-                prev.map((user) => (user.id === id ? { ...user, ...updatedUser } : user))
+    const updateUser = useMutation({
+        mutationFn: ({ id, updatedData }: { id: number; updatedData: UpdateUserInput }) =>
+            updateUserService(id, updatedData),
+        onSuccess: (updatedUser, { id }) => {
+            queryClient.setQueryData(["users"], (oldUsers: User[] | undefined) =>
+                (oldUsers || []).map((user) =>
+                    user.id === id ? { ...user, ...updatedUser } : user
+                )
             );
-        } catch (err) {
-            setError("Failed to update user");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        },
+    });
 
     // Delete a user
-    const deleteUser = async (id: number) => {
-        setLoading(true);
-        setError(null);
-        try {
-            await deleteUserService(id);
-            setUsers((prev) => prev.filter((user) => user.id !== id));
-        } catch (err) {
-            setError("Failed to delete user");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch users when the hook is used
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const deleteUser = useMutation({
+        mutationFn: (id: number) => deleteUserService(id),
+        onSuccess: (_, id) => {
+            queryClient.setQueryData(["users"], (oldUsers: User[] | undefined) =>
+                (oldUsers || []).filter((user) => user.id !== id)
+            );
+        },
+    });
 
     return {
         users,
-        userProfile, // Expose userProfile state
-        loading,
-        error,
-        fetchUsers,
-        createUser,
-        getUserById,
-        getUserProfileById,
-        updateUser,
-        updateUserProfile,
-        deleteUser,
+        usersLoading,
+        usersError,
+        useUserProfile,
+        createUser: createUser.mutateAsync,
+        updateUserProfile: updateUserProfile.mutateAsync,
+        updateUser: updateUser.mutateAsync,
+        deleteUser: deleteUser.mutateAsync,
     };
 };
