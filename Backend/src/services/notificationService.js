@@ -51,7 +51,7 @@ const createNotification = async (data) => {
         id,
     }));
 
-    // Create the notification and attach recipients and files
+
     return await prisma.notification.create({
         data: {
             ...rest,
@@ -95,6 +95,7 @@ const getNotificationById = async (id) => {
 
 // Delete a notification
 const deleteNotification = async (id) => {
+    // should i also delete related files ?
     return await prisma.notification.delete({
         where: { id: parseInt(id) },
     });
@@ -118,13 +119,13 @@ const getNotificationsByUserId = async (userId) => {
     });
 };
 
-// Mark a notification as read
+
 const markNotificationAsRead = async (notificationId, userId) => {
     return await prisma.notification.update({
         where: { id: parseInt(notificationId) },
         data: {
             read_users: {
-                connect: { id: parseInt(userId) }, // Add the user to the read_users relation
+                connect: { id: parseInt(userId) },
             },
         },
         include: {

@@ -1,11 +1,16 @@
-import { validationResult, body, param } from 'express-validator';
+import multer from 'multer';
+import { uploadToWasabi, generateSignedUrl } from '../config/fileConfig.js';
+import fileService from '../services/fileService.js';
 import submissionService from '../services/submissionService.js';
+import { validationResult, body, param } from 'express-validator';
+
+const submissionUpload = multer({ storage: multer.memoryStorage() });
 
 // Create a submission
 const createSubmission = [
-    // Validation rules
-    body('assignment_id').isInt().withMessage('Assignment ID must be a valid integer'),
-    body('student_id').isInt().withMessage('Student ID must be a valid integer'),
+    submissionUpload.array('files', 5),
+    body('assignment_id').isInt().withMessage('Assignment ID must be a valid integer').toInt(),
+    body('student_id').isInt().withMessage('Student ID must be a valid integer').toInt(),
     body('content').isString().notEmpty().withMessage('Content is required and must be a string'),
 
     // Controller logic
@@ -19,15 +24,43 @@ const createSubmission = [
         const { assignment_id, student_id, content } = req.body;
 
         try {
+            const uploadedFiles = [];
+
+            // If files are uploaded, handle the file uploads
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const fileKey = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+
+                    // Upload the file to Wasabi
+                    await uploadToWasabi({ file, fileKey });
+
+                    // Save the file metadata in the database
+                    const savedFile = await fileService.uploadFile({
+                        key: fileKey,
+                        uploaded_by: student_id, // Associate the file with the student
+                        filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    });
+
+                    uploadedFiles.push(savedFile);
+                }
+            }
+
+            // Create the submission
             const submission = await submissionService.createSubmission({
                 assignment_id,
                 student_id,
                 content,
+                files: uploadedFiles.map((file) => ({ id: file.id })), // Attach file IDs to the submission
             });
 
-            res.status(201).json(submission);
+            res.status(201).json({
+                ...submission,
+                files: uploadedFiles,
+            });
         } catch (error) {
-            console.error(error);
+            console.error('Error creating submission:', error);
             res.status(500).json({ error: 'Failed to create submission' });
         }
     },
@@ -37,9 +70,22 @@ const createSubmission = [
 const getAllSubmissions = async (req, res) => {
     try {
         const submissions = await submissionService.getAllSubmissions();
-        res.status(200).json(submissions);
+
+        const submissionsWithSignedUrls = await Promise.all(
+            submissions.map(async (submission) => {
+                const filesWithSignedUrls = await Promise.all(
+                    submission.files.map(async (file) => {
+                        const signedUrl = await generateSignedUrl(file.key);
+                        return { ...file, signedUrl };
+                    })
+                );
+                return { ...submission, files: filesWithSignedUrls };
+            })
+        );
+
+        res.status(200).json(submissionsWithSignedUrls);
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching submissions:', error);
         res.status(500).json({ error: 'Failed to fetch submissions' });
     }
 };
@@ -65,9 +111,19 @@ const getSubmissionById = [
                 return res.status(404).json({ error: 'Submission not found' });
             }
 
-            res.status(200).json(submission);
+            const filesWithSignedUrls = await Promise.all(
+                submission.files.map(async (file) => {
+                    const signedUrl = await generateSignedUrl(file.key);
+                    return { ...file, signedUrl };
+                })
+            );
+
+            res.status(200).json({
+                ...submission,
+                files: filesWithSignedUrls,
+            });
         } catch (error) {
-            console.error(error);
+            console.error('Error fetching submission:', error);
             res.status(500).json({ error: 'Failed to fetch submission' });
         }
     },
@@ -101,7 +157,7 @@ const updateSubmission = [
 
             res.status(200).json(updatedSubmission);
         } catch (error) {
-            console.error(error);
+            console.error('Error updating submission:', error);
             res.status(500).json({ error: 'Failed to update submission' });
         }
     },
@@ -126,7 +182,7 @@ const deleteSubmission = [
             await submissionService.deleteSubmission(parseInt(id));
             res.status(204).send();
         } catch (error) {
-            console.error(error);
+            console.error('Error deleting submission:', error);
             res.status(500).json({ error: 'Failed to delete submission' });
         }
     },
@@ -148,9 +204,22 @@ const getSubmissionsByStudentId = [
 
         try {
             const submissions = await submissionService.getSubmissionsByStudentId(parseInt(studentId));
-            res.status(200).json(submissions);
+
+            const submissionsWithSignedUrls = await Promise.all(
+                submissions.map(async (submission) => {
+                    const filesWithSignedUrls = await Promise.all(
+                        submission.files.map(async (file) => {
+                            const signedUrl = await generateSignedUrl(file.key);
+                            return { ...file, signedUrl };
+                        })
+                    );
+                    return { ...submission, files: filesWithSignedUrls };
+                })
+            );
+
+            res.status(200).json(submissionsWithSignedUrls);
         } catch (error) {
-            console.error(error);
+            console.error('Error fetching submissions for the student:', error);
             res.status(500).json({ error: 'Failed to fetch submissions for the student' });
         }
     },
@@ -172,9 +241,22 @@ const getSubmissionsByAssignmentId = [
 
         try {
             const submissions = await submissionService.getSubmissionsByAssignmentId(parseInt(assignmentId));
-            res.status(200).json(submissions);
+
+            const submissionsWithSignedUrls = await Promise.all(
+                submissions.map(async (submission) => {
+                    const filesWithSignedUrls = await Promise.all(
+                        submission.files.map(async (file) => {
+                            const signedUrl = await generateSignedUrl(file.key);
+                            return { ...file, signedUrl };
+                        })
+                    );
+                    return { ...submission, files: filesWithSignedUrls };
+                })
+            );
+
+            res.status(200).json(submissionsWithSignedUrls);
         } catch (error) {
-            console.error(error);
+            console.error('Error fetching submissions for the assignment:', error);
             res.status(500).json({ error: 'Failed to fetch submissions for the assignment' });
         }
     },

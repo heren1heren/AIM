@@ -1,5 +1,10 @@
+import multer from 'multer';
 import { validationResult, body, param } from 'express-validator';
+import { uploadToWasabi, generateSignedUrl } from '../config/fileConfig.js';
+import fileService from '../services/fileService.js';
 import assignmentService from '../services/assignmentService.js';
+
+const assignmentUpload = multer({ storage: multer.memoryStorage() });
 
 // Utility function to handle validation errors
 const handleValidationErrors = (req, res) => {
@@ -11,29 +16,62 @@ const handleValidationErrors = (req, res) => {
 
 // Create an assignment
 const createAssignment = [
+    assignmentUpload.array('files', 5), // Handle multiple file uploads (max 5 files)
     // Validation rules
     body('title').isString().notEmpty().withMessage('Title is required'),
     body('description').optional().isString().withMessage('Description must be a string'),
-    body('class_id').isInt().withMessage('Class ID must be a valid integer'),
+    body('class_id').isInt().withMessage('Class ID must be a valid integer').toInt(),
     body('due_date').isISO8601().withMessage('Due date must be a valid ISO 8601 date'),
     body('assignedDate').isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
+    body('uploader_id').isInt().withMessage('Uploader ID must be a valid integer').toInt(), // Validate uploader_id
 
     // Controller logic
     async (req, res) => {
-        handleValidationErrors(req, res);
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-        const { title, description, class_id, due_date, assignedDate } = req.body;
+        const { title, description, class_id, due_date, assignedDate, uploader_id } = req.body;
 
         try {
+            const uploadedFiles = [];
+
+            // If files are uploaded, handle the file uploads
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const fileKey = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+
+                    // Upload the file to Wasabi
+                    await uploadToWasabi({ file, fileKey });
+
+                    // Save the file metadata in the database
+                    const savedFile = await fileService.uploadFile({
+                        key: fileKey,
+                        uploaded_by: parseInt(uploader_id), // Associate the file with the uploader
+                        filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    });
+
+                    uploadedFiles.push(savedFile);
+                }
+            }
+
+            // Create the assignment
             const assignment = await assignmentService.createAssignment({
                 title,
                 description,
                 class_id,
                 due_date: new Date(due_date),
                 assignedDate: new Date(assignedDate),
+                files: uploadedFiles.map((file) => ({ id: file.id })), // Attach file IDs to the assignment
             });
 
-            res.status(201).json(assignment);
+            res.status(201).json({
+                ...assignment,
+                files: uploadedFiles,
+            });
         } catch (error) {
             console.error('Error creating assignment:', error);
             res.status(500).json({ error: 'Failed to create assignment' });
@@ -41,11 +79,23 @@ const createAssignment = [
     },
 ];
 
-// Get all assignments
 const getAllAssignments = async (req, res) => {
     try {
         const assignments = await assignmentService.getAllAssignments();
-        res.status(200).json(assignments);
+
+        const assignmentsWithSignedUrls = await Promise.all(
+            assignments.map(async (assignment) => {
+                const filesWithSignedUrls = await Promise.all(
+                    assignment.files.map(async (file) => {
+                        const signedUrl = await generateSignedUrl(file.key);
+                        return { ...file, signedUrl };
+                    })
+                );
+                return { ...assignment, files: filesWithSignedUrls };
+            })
+        );
+
+        res.status(200).json(assignmentsWithSignedUrls);
     } catch (error) {
         console.error('Error fetching assignments:', error);
         res.status(500).json({ error: 'Failed to fetch assignments' });
@@ -67,7 +117,20 @@ const getAssignmentsByStudentId = [
 
         try {
             const assignments = await assignmentService.getAssignmentsByStudentId(parseInt(studentId));
-            res.status(200).json(assignments);
+
+            const assignmentsWithSignedUrls = await Promise.all(
+                assignments.map(async (assignment) => {
+                    const filesWithSignedUrls = await Promise.all(
+                        assignment.files.map(async (file) => {
+                            const signedUrl = await generateSignedUrl(file.key);
+                            return { ...file, signedUrl };
+                        })
+                    );
+                    return { ...assignment, files: filesWithSignedUrls };
+                })
+            );
+
+            res.status(200).json(assignmentsWithSignedUrls);
         } catch (error) {
             console.error('Error fetching assignments by student ID:', error);
             res.status(500).json({ error: 'Failed to fetch assignments' });
@@ -88,20 +151,30 @@ const getAssignmentsByClassId = [
 
         try {
             const assignments = await assignmentService.getAssignmentsByClassId(parseInt(classId));
-            res.status(200).json(assignments);
+
+            const assignmentsWithSignedUrls = await Promise.all(
+                assignments.map(async (assignment) => {
+                    const filesWithSignedUrls = await Promise.all(
+                        assignment.files.map(async (file) => {
+                            const signedUrl = await generateSignedUrl(file.key);
+                            return { ...file, signedUrl };
+                        })
+                    );
+                    return { ...assignment, files: filesWithSignedUrls };
+                })
+            );
+
+            res.status(200).json(assignmentsWithSignedUrls);
         } catch (error) {
             console.error('Error fetching assignments by class ID:', error);
-            res.status(500).json({ error: 'Failed to fetch assignments' });
+            res.status(500).json({ error: 'Failed to fetch assignments by class ID' });
         }
     },
 ];
 
 // Get an assignment by ID
 const getAssignmentById = [
-    // Validation rules
     param('id').isInt().withMessage('Assignment ID must be a valid integer'),
-
-    // Controller logic
     async (req, res) => {
         handleValidationErrors(req, res);
 
@@ -113,7 +186,17 @@ const getAssignmentById = [
                 return res.status(404).json({ error: 'Assignment not found' });
             }
 
-            res.status(200).json(assignment);
+            const filesWithSignedUrls = await Promise.all(
+                assignment.files.map(async (file) => {
+                    const signedUrl = await generateSignedUrl(file.key);
+                    return { ...file, signedUrl };
+                })
+            );
+
+            res.status(200).json({
+                ...assignment,
+                files: filesWithSignedUrls,
+            });
         } catch (error) {
             console.error('Error fetching assignment:', error);
             res.status(500).json({ error: 'Failed to fetch assignment' });

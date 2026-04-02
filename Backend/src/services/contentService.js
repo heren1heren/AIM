@@ -3,8 +3,20 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const createContent = async (data) => {
+    const { files, ...rest } = data;
+
     try {
-        return await prisma.content.create({ data });
+        return await prisma.content.create({
+            data: {
+                ...rest,
+                files: {
+                    connect: files, // Attach files to the content
+                },
+            },
+            include: {
+                files: true, // Include files in the response
+            },
+        });
     } catch (error) {
         console.error('Error creating content:', error);
         throw new Error('Failed to create content');
@@ -61,7 +73,7 @@ const getContentsByClassId = async (classId) => {
     try {
         return await prisma.content.findMany({
             where: { class_id: classId },
-            include: { class: true, files: true }, // Include related data if needed
+            include: { class: true, files: true },
         });
     } catch (error) {
         console.error(`Error fetching contents for class ID ${classId}:`, error);
@@ -75,5 +87,5 @@ export default {
     getContentById,
     updateContent,
     deleteContent,
-    getContentsByClassId, // Export the new service
+    getContentsByClassId,
 };

@@ -1,5 +1,10 @@
+import multer from 'multer';
 import { validationResult, body, param } from 'express-validator';
+import { uploadToWasabi, generateSignedUrl } from '../config/fileConfig.js';
+import fileService from '../services/fileService.js';
 import contentService from '../services/contentService.js';
+
+const contentUpload = multer({ storage: multer.memoryStorage() });
 
 // Utility function to handle validation errors
 const handleValidationErrors = (req, res) => {
@@ -11,29 +16,52 @@ const handleValidationErrors = (req, res) => {
 
 // Create content
 const createContent = [
+    contentUpload.array('files', 5),
+
     // Validation rules
     body('title').isString().notEmpty().withMessage('Title is required'),
     body('description').optional().isString().withMessage('Description must be a string'),
-    body('urls').isArray().withMessage('URLs must be an array'),
-    body('class_id').isInt().withMessage('Class ID must be a valid integer'),
+    body('class_id').isInt().withMessage('Class ID must be a valid integer').toInt(),
     body('assignedDate').isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
+    body('uploader_id').isInt().withMessage('Uploader ID must be a valid integer').toInt(), // Validate uploader_id
 
     // Controller logic
     async (req, res) => {
         handleValidationErrors(req, res);
 
-        const { title, description, urls, class_id, assignedDate } = req.body;
+        const { title, description, urls, class_id, assignedDate, uploader_id } = req.body;
 
         try {
+            const uploadedFiles = [];
+
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const fileKey = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+                    await uploadToWasabi({ file, fileKey });
+                    const savedFile = await fileService.uploadFile({
+                        key: fileKey,
+                        uploaded_by: parseInt(uploader_id), // Pass the uploader ID
+                        filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    });
+                    uploadedFiles.push(savedFile);
+                }
+            }
+
             const newContent = await contentService.createContent({
                 title,
                 description,
                 urls,
                 class_id,
                 assignedDate: new Date(assignedDate),
+                files: uploadedFiles.map((file) => ({ id: file.id })), // Attach file IDs to the content
             });
 
-            res.status(201).json(newContent);
+            res.status(201).json({
+                ...newContent,
+                files: uploadedFiles,
+            });
         } catch (error) {
             console.error('Error creating content:', error);
             res.status(500).json({ error: error.message });
@@ -45,7 +73,20 @@ const createContent = [
 const getAllContent = async (req, res) => {
     try {
         const contents = await contentService.getAllContent();
-        res.status(200).json(contents);
+
+        const contentsWithSignedUrls = await Promise.all(
+            contents.map(async (content) => {
+                const filesWithSignedUrls = await Promise.all(
+                    content.files.map(async (file) => {
+                        const signedUrl = await generateSignedUrl(file.key);
+                        return { ...file, signedUrl };
+                    })
+                );
+                return { ...content, files: filesWithSignedUrls };
+            })
+        );
+
+        res.status(200).json(contentsWithSignedUrls);
     } catch (error) {
         console.error('Error fetching content:', error);
         res.status(500).json({ error: error.message });
@@ -69,7 +110,17 @@ const getContentById = [
                 return res.status(404).json({ error: 'Content not found' });
             }
 
-            res.status(200).json(content);
+            const filesWithSignedUrls = await Promise.all(
+                content.files.map(async (file) => {
+                    const signedUrl = await generateSignedUrl(file.key);
+                    return { ...file, signedUrl };
+                })
+            );
+
+            res.status(200).json({
+                ...content,
+                files: filesWithSignedUrls,
+            });
         } catch (error) {
             console.error('Error fetching content:', error);
             res.status(500).json({ error: error.message });
@@ -145,7 +196,20 @@ const getContentsByClassId = [
 
         try {
             const contents = await contentService.getContentsByClassId(parseInt(classId));
-            res.status(200).json(contents);
+
+            const contentsWithSignedUrls = await Promise.all(
+                contents.map(async (content) => {
+                    const filesWithSignedUrls = await Promise.all(
+                        content.files.map(async (file) => {
+                            const signedUrl = await generateSignedUrl(file.key);
+                            return { ...file, signedUrl };
+                        })
+                    );
+                    return { ...content, files: filesWithSignedUrls };
+                })
+            );
+
+            res.status(200).json(contentsWithSignedUrls);
         } catch (error) {
             console.error('Error fetching contents by class ID:', error);
             res.status(500).json({ error: 'Failed to fetch contents' });

@@ -116,10 +116,10 @@ model Notification {
   is_for_teachers Boolean      @default(false) 
   is_global       Boolean      @default(false) 
 
-  // Relation to the creator of the notification
+  
   creator         User        @relation("CreatedNotifications", fields: [created_by], references: [id])
 
-  // Relation to the recipients of the notification
+  
   recipients      User[]      @relation("RecipientNotifications")
 
   // Many-to-many relation with Class
@@ -206,15 +206,13 @@ enum AttendanceStatus {
 
 model Content {
   id          Int      @id @default(autoincrement())
-  title       String   // Title of the content
-  description String?  // Optional description of the content
-  urls        String[] // Array of URLs for external resources
-  class_id    Int      // Foreign key to the Class model
-
-  assignedDate DateTime // Date when the content is assigned
+  title       String  
+  description String?  
+  class_id    Int      
+  assignedDate DateTime 
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  class       Class    @relation(fields: [class_id], references: [id]) // Relation to Class
-  files       File[]   // Relation to File model
+  class       Class    @relation(fields: [class_id], references: [id]) 
+  files       File[]  
 }
