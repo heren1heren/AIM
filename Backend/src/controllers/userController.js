@@ -103,7 +103,18 @@ const getUserProfileById = [
             if (!userProfile) {
                 return res.status(404).json({ error: 'User profile not found' });
             }
-            res.status(200).json(userProfile);
+
+            let signedAvatarUrl = null;
+
+            // If the user has an avatarKey, generate the signed URL
+            if (userProfile.avatarKey) {
+                signedAvatarUrl = await generateSignedUrl(userProfile.avatarKey);
+            }
+
+            res.status(200).json({
+                ...userProfile,
+                avatarUrl: signedAvatarUrl, // Include the signed URL in the response
+            });
         } catch (error) {
             console.error('Error fetching user profile:', error);
             res.status(500).json({ error: 'Failed to fetch user profile' });

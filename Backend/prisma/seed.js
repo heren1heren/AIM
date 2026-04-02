@@ -104,89 +104,66 @@ async function main() {
         },
     });
 
-    const assignment1 = await prisma.assignment.create({
-        data: {
-            class_id: class1.id,
-            title: 'Assignment 1: Algebra Problems',
-            description: 'Solve algebra problems',
-            due_date: new Date('2026-09-15'),
-            assignedDate: new Date('2026-09-10'),
+    // Create notifications and associate them with recipients and classes
+    const notifications = [
+        {
+            title: 'Welcome to the platform!',
+            message: 'We are excited to have you here. Let us know if you need any help!',
+            created_by: user1.id,
+            is_global: true,
+            classes: {
+                connect: [{ id: class1.id }, { id: class2.id }], // Associate with both classes
+            },
+            recipients: {
+                connect: [
+                    { id: student1.id },
+                    { id: student2.id },
+                    { id: user2.id }, // Teacher of class1
+                    { id: user1.id }, // Teacher of class2
+                ],
+            },
         },
-    });
-
-    const assignment2 = await prisma.assignment.create({
-        data: {
-            class_id: class2.id,
-            title: 'Assignment 1: Physics Problems',
-            description: 'Solve physics problems',
-            due_date: new Date('2026-09-20'),
-            assignedDate: new Date('2026-09-12'),
+        {
+            title: 'Upcoming Event',
+            message: 'Don’t forget about the upcoming event next week!',
+            created_by: user1.id,
+            is_for_students: true,
+            classes: {
+                connect: [{ id: class1.id }], // Associate with class1 only
+            },
+            recipients: {
+                connect: [
+                    { id: student1.id }, // Student in class1
+                    { id: student2.id }, // Student in class1
+                ],
+            },
         },
-    });
-
-    const content1 = await prisma.content.create({
-        data: {
-            class_id: class1.id,
-            title: 'Lesson 1: Algebra Basics',
-            description: 'Introduction to Algebra',
-            urls: ['https://example.com/algebra-video'],
-            assignedDate: new Date('2026-09-05'),
+        {
+            title: 'System Update',
+            message: 'The platform will undergo maintenance tomorrow from 12 AM to 2 AM.',
+            created_by: user1.id,
+            is_global: true,
+            classes: {
+                connect: [{ id: class2.id }], // Associate with class2 only
+            },
+            recipients: {
+                connect: [
+                    { id: student1.id },
+                    { id: student2.id },
+                    { id: user2.id }, // Teacher of class1
+                    { id: user1.id }, // Teacher of class2
+                ],
+            },
         },
-    });
+    ];
 
-    const content2 = await prisma.content.create({
-        data: {
-            class_id: class2.id,
-            title: 'Lesson 1: Physics Basics',
-            description: 'Introduction to Physics',
-            urls: ['https://example.com/physics-video'],
-            assignedDate: new Date('2026-09-06'),
-        },
-    });
+    for (const notification of notifications) {
+        await prisma.notification.create({
+            data: notification,
+        });
+    }
 
-    const file1 = await prisma.file.create({
-        data: {
-            key: 'math-syllabus-12345.pdf',
-            filename: 'Algebra Syllabus',
-            mimetype: 'application/pdf',
-            size: 1024,
-            uploaded_by: user2.id,
-            class_id: class1.id,
-        },
-    });
-
-    const file2 = await prisma.file.create({
-        data: {
-            key: 'physics-syllabus-67890.pdf',
-            filename: 'Physics Syllabus',
-            mimetype: 'application/pdf',
-            size: 2048,
-            uploaded_by: user1.id,
-            class_id: class2.id,
-        },
-    });
-
-    const avatarFile1 = await prisma.file.create({
-        data: {
-            key: 'avatar-user1.png',
-            filename: 'avatar-user1.png',
-            mimetype: 'image/png',
-            size: 512,
-            uploaded_by: user1.id,
-        },
-    });
-
-    const avatarFile2 = await prisma.file.create({
-        data: {
-            key: 'avatar-user2.png',
-            filename: 'avatar-user2.png',
-            mimetype: 'image/png',
-            size: 512,
-            uploaded_by: user2.id,
-        },
-    });
-
-    console.log('Database has been seeded with class instances, assignments, content, and files!');
+    console.log('Database has been seeded with notifications, recipients, and classes!');
 }
 
 main()

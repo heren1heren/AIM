@@ -104,23 +104,31 @@ const updateUser = async (id, { name, addRole, removeRole, password, avatarKey, 
 const deleteUser = async (id) => {
     const userId = parseInt(id);
 
-    // Fetch the user's role
+    // Fetch the user's role based on relations
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { role: true }, // Only fetch the role field
+        select: {
+            id: true,
+            admin: true, // Check if the user is an admin
+            teacher: true, // Check if the user is a teacher
+            student: true, // Check if the user is a student
+        },
     });
 
     if (!user) {
         throw new Error(`User with ID ${userId} not found`);
     }
 
-    // Delete role-specific records based on the user's role
-    if (user.role === 'student') {
-        await prisma.student.deleteMany({ where: { user_id: userId } });
-    } else if (user.role === 'teacher') {
-        await prisma.teacher.deleteMany({ where: { user_id: userId } });
-    } else if (user.role === 'admin') {
+    // Determine the user's role based on the relations
+    if (user.admin) {
+        // Delete admin-specific records
         await prisma.admin.deleteMany({ where: { user_id: userId } });
+    } else if (user.teacher) {
+        // Delete teacher-specific records
+        await prisma.teacher.deleteMany({ where: { user_id: userId } });
+    } else if (user.student) {
+        // Delete student-specific records
+        await prisma.student.deleteMany({ where: { user_id: userId } });
     }
 
     // Finally, delete the user

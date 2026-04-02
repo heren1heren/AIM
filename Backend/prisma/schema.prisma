@@ -7,11 +7,6 @@ datasource db {
   url      = env("LOCAL_DATABASE_URL")
 }
 
-enum Role {
-  admin
-  teacher
-  student
-}
 
 model User {
   id            Int           @id @default(autoincrement())
@@ -22,12 +17,21 @@ model User {
   updated_at    DateTime?     @updatedAt
   bio           String?
 
-  avatarKey    String?
+  avatarKey     String?
 
   admin         Admin?        @relation("AdminUser")
   teacher       Teacher?      @relation("TeacherUser")
   student       Student?      @relation("StudentUser")
-  notifications Notification[] @relation("CreatedNotifications")
+
+  // Notifications created by the user
+  createdNotifications Notification[] @relation("CreatedNotifications")
+
+  // Notifications received by the user
+  recipientNotifications Notification[] @relation("RecipientNotifications")
+
+  // Notifications read by the user
+  readNotifications Notification[] @relation("ReadNotifications")
+
   messages      Message[]     @relation("SenderMessages") 
   received_messages  Message[] @relation("RecipientMessages")
   files         File[]        @relation("UploadedFiles")
@@ -70,7 +74,7 @@ model Class {
   teacher     Teacher      @relation(fields: [teacher_id], references: [id])
   students    Student[]
   assignments Assignment[]
-  notification Notification[] // Relation to Notification
+  notifications Notification[] @relation("ClassNotifications") // Updated relation
   files       File[]
   attendances Attendance[]
   contents    Content[]    // Relation to Content
@@ -108,13 +112,22 @@ model Notification {
   message         String?
   created_by      Int
   created_at      DateTime    @default(now())
-  class_id        Int?        
   is_for_students Boolean      @default(false) 
   is_for_teachers Boolean      @default(false) 
   is_global       Boolean      @default(false) 
 
+  // Relation to the creator of the notification
   creator         User        @relation("CreatedNotifications", fields: [created_by], references: [id])
-  class           Class?      @relation(fields: [class_id], references: [id]) // Relation to Class
+
+  // Relation to the recipients of the notification
+  recipients      User[]      @relation("RecipientNotifications")
+
+  // Many-to-many relation with Class
+  classes         Class[]     @relation("ClassNotifications")
+
+  // Relation to the users who have read the notification
+  read_users      User[]      @relation("ReadNotifications")
+
   files           File[]      // Relation to File model
 }
 
