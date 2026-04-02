@@ -11,9 +11,16 @@ export const setupInterceptors = (setAccessToken: (token: string | null) => void
 
     api.interceptors.request.use((config) => {
         const token = localStorage.getItem("accessToken");
+        const roles = JSON.parse(localStorage.getItem("roles") || "[]"); // Retrieve roles from localStorage
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        if (roles.length > 0) {
+            config.headers["X-Roles"] = roles.join(","); // Attach roles as a custom header
+        }
+
         return config;
     });
 
@@ -32,6 +39,13 @@ export const setupInterceptors = (setAccessToken: (token: string | null) => void
                     setAccessToken(newAccessToken);
 
                     originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+
+                    // Reattach roles after refreshing the token
+                    const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+                    if (roles.length > 0) {
+                        originalRequest.headers["X-Roles"] = roles.join(",");
+                    }
+
                     return api(originalRequest);
                 } catch (refreshError) {
                     console.error("Token refresh failed:", refreshError);

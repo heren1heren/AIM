@@ -72,29 +72,35 @@ const createNotification = async (data) => {
     });
 };
 
+// Get all notifications, including files and read_users
 const getAllNotifications = async () => {
     return await prisma.notification.findMany({
         include: {
-            files: true,
+            files: true, // Include files
+            read_users: true, // Include read_users
         },
     });
 };
 
+// Get a notification by ID, including files and read_users
 const getNotificationById = async (id) => {
     return await prisma.notification.findUnique({
         where: { id: parseInt(id) },
         include: {
-            files: true,
+            files: true, // Include files
+            read_users: true, // Include read_users
         },
-    },);
+    });
 };
 
+// Delete a notification
 const deleteNotification = async (id) => {
     return await prisma.notification.delete({
         where: { id: parseInt(id) },
     });
 };
 
+// Get notifications by user ID, including files and read_users
 const getNotificationsByUserId = async (userId) => {
     return await prisma.notification.findMany({
         where: {
@@ -103,7 +109,8 @@ const getNotificationsByUserId = async (userId) => {
             },
         },
         include: {
-            files: true, // Include files in the response
+            files: true, // Include files
+            read_users: true, // Include read_users
         },
         orderBy: {
             created_at: 'desc', // Optional: Order notifications by creation date
@@ -111,6 +118,7 @@ const getNotificationsByUserId = async (userId) => {
     });
 };
 
+// Mark a notification as read
 const markNotificationAsRead = async (notificationId, userId) => {
     return await prisma.notification.update({
         where: { id: parseInt(notificationId) },
@@ -118,6 +126,9 @@ const markNotificationAsRead = async (notificationId, userId) => {
             read_users: {
                 connect: { id: parseInt(userId) }, // Add the user to the read_users relation
             },
+        },
+        include: {
+            read_users: true,
         },
     });
 };

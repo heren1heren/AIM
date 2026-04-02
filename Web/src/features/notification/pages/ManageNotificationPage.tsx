@@ -10,48 +10,49 @@ import {
     TableRow,
     Paper,
     Button,
+    Link,
 } from "@mui/material";
-import AddNotificationDialog from "../components/AddNotificationDialog"; // Import the dialog component
-
-interface Notification {
-    id: string;
-    title: string;
-    message: string;
-    target: "teacher" | "student" | "all";
-    fileUrl?: string; // Optional file URL
-}
-
-const mockNotifications: Notification[] = [
-    { id: "1", title: "Exam Reminder", message: "Midterm exams start next week.", target: "student" },
-    { id: "2", title: "Staff Meeting", message: "There will be a staff meeting on Friday.", target: "teacher" },
-    { id: "3", title: "Holiday Notice", message: "School will be closed on Monday.", target: "all" },
-];
+import AddNotificationDialog from "../components/AddNotificationDialog";
+import { useNotifications } from "../../../hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 
 export default function ManageNotificationsPage() {
-    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+    const {
+        notifications,
+        notificationsLoading,
+        notificationsError,
+        createNotification,
+        deleteNotification,
+    } = useNotifications(true);
+
     const [openDialog, setOpenDialog] = useState(false);
+    const navigate = useNavigate();
 
     // Handle adding a new notification
-    const handleAddNotification = (notificationData: {
+    const handleAddNotification = async (notificationData: {
         title: string;
-        content: string;
-        file: File | null;
+        message: string;
+        is_global: boolean;
+        is_for_teachers: boolean;
+        is_for_students: boolean;
+        class_ids?: number[]; // Optional class IDs
+        files?: File[]; // Optional files
     }) => {
-        const newNotification: Notification = {
-            id: Date.now().toString(),
-            title: notificationData.title,
-            message: notificationData.content,
-            target: "all", // Default target (can be updated to allow selection in the dialog)
-            fileUrl: notificationData.file ? URL.createObjectURL(notificationData.file) : undefined, // Generate a URL for the uploaded file
-        };
-
-        setNotifications((prev) => [...prev, newNotification]);
-        setOpenDialog(false); // Close the dialog
+        try {
+            await createNotification(notificationData);
+            setOpenDialog(false); // Close the dialog
+        } catch (error) {
+            console.error("Error creating notification:", error);
+        }
     };
 
     // Handle deleting a notification
-    const handleDelete = (id: string) => {
-        setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteNotification(id);
+        } catch (error) {
+            console.error("Error deleting notification:", error);
+        }
     };
 
     return (
@@ -69,6 +70,9 @@ export default function ManageNotificationsPage() {
                 Add Notification
             </Button>
 
+            {notificationsLoading && <Typography>Loading notifications...</Typography>}
+            {notificationsError && <Typography>Error loading notifications</Typography>}
+
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -83,7 +87,7 @@ export default function ManageNotificationsPage() {
                                 <Typography fontWeight={600}>Target</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography fontWeight={600}>Attached File</Typography>
+                                <Typography fontWeight={600}>Files</Typography>
                             </TableCell>
                             <TableCell align="right">
                                 <Typography fontWeight={600}>Actions</Typography>
@@ -91,21 +95,38 @@ export default function ManageNotificationsPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {notifications.map((notification) => (
+                        {notifications?.map((notification) => (
                             <TableRow key={notification.id}>
                                 <TableCell>{notification.title}</TableCell>
                                 <TableCell>{notification.message}</TableCell>
-                                <TableCell>{notification.target}</TableCell>
                                 <TableCell>
-                                    {notification.fileUrl ? (
-                                        <a href={notification.fileUrl} target="_blank" rel="noopener noreferrer">
-                                            View File
-                                        </a>
-                                    ) : (
-                                        "No file attached"
-                                    )}
+                                    {notification.is_global
+                                        ? "Global"
+                                        : notification.is_for_teachers
+                                            ? "Teachers"
+                                            : notification.is_for_students
+                                                ? "Students"
+                                                : "Classes"}
+                                </TableCell>
+                                <TableCell>
+                                    <Link
+                                        href={`/notifications/${notification.id}/files`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        {notification.files?.length || 0} Files
+                                    </Link>
                                 </TableCell>
                                 <TableCell align="right">
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        onClick={() => navigate(`/notifications/${notification.id}`)}
+                                        sx={{ mr: 1 }}
+                                    >
+                                        View
+                                    </Button>
                                     <Button
                                         variant="contained"
                                         color="error"
@@ -125,7 +146,7 @@ export default function ManageNotificationsPage() {
             <AddNotificationDialog
                 open={openDialog}
                 onClose={() => setOpenDialog(false)}
-                onSubmit={handleAddNotification} // Pass the handler to the dialog
+                onSubmit={handleAddNotification}
             />
         </Box>
     );

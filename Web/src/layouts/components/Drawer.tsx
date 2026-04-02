@@ -32,7 +32,7 @@ export default function CustomDrawer({ open, onClose, menuGroups }: DrawerProps)
     return (
         <Drawer anchor="left" open={open} onClose={onClose}>
             <Box sx={{ width: 250 }} role="presentation">
-                {/* Always display Home link at the top */}
+                
                 <List>
                     <ListItem disablePadding>
                         <ListItemButton onClick={() => menuGroups.find((group) => group.group === "Common Tools")?.items[0].onClick()}>

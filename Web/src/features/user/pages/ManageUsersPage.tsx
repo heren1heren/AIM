@@ -19,7 +19,7 @@ import DeleteUserDialog from "../components/DeleteUserDialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ManageUsersPage() {
-    const { users, usersLoading, usersError, createUser, updateUser, deleteUser } = useUsers();
+    const { users, usersLoading, usersError, createUser, updateUser, deleteUser } = useUsers(true);
     const queryClient = useQueryClient();
 
     const [name, setName] = useState("");

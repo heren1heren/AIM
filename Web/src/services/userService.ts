@@ -2,10 +2,10 @@ import api from "./api"; // Axios instance with interceptors
 
 export interface User {
     id: number;
-    name: string; // User's name
-    username: string; // User's username
-    avatarKey?: string; // User's avatar key (replaces avatarUrl)
-    avatarUrl?: string; // Add avatarUrl to the User interface
+    name: string;
+    username: string; 
+    avatarKey?: string; 
+    avatarUrl?: string; 
     bio?: string; // User's bio
     isAdmin: boolean;
     isTeacher: boolean;
@@ -15,7 +15,7 @@ export interface User {
 export interface UserProfile {
     name: string;
     avatarKey?: string;
-    avatarUrl?: string; // Add avatarUrl to the UserProfile interface
+    avatarUrl?: string; 
     bio?: string;
 }
 
@@ -78,7 +78,7 @@ export const deleteUser = async (id: number): Promise<void> => {
 // Update user profile (including avatar upload)
 export const updateUserProfile = async (
     id: number,
-    updatedData: UpdateUserProfileInput // Use FormData to handle file uploads
+    updatedData: UpdateUserProfileInput 
 ): Promise<UserProfile> => {
     const response = await api.patch(`/users/${id}/profile`, updatedData, {
         headers: {

@@ -13,13 +13,15 @@ import {
     type UpdateUserProfileInput,
 } from "../services/userService";
 
-export const useUsers = () => {
+export const useUsers = (fetchUsersEnabled: boolean = false) => {
     const queryClient = useQueryClient();
 
     // Fetch all users
     const { data: users, isLoading: usersLoading, isError: usersError } = useQuery({
         queryKey: ["users"],
         queryFn: fetchUsersService,
+        enabled: fetchUsersEnabled
+
     });
 
     // Fetch user profile by ID
