@@ -18,9 +18,9 @@ import messageRoutes from "./routes/messages.js"
 
 import notificationRoutes from "./routes/notifications.js";
 
-import studentRoutes from "./routes/students.js";
+
 import submissionRoutes from "./routes/submissions.js";
-import teacherRoutes from "./routes/teacher.js";
+
 import userRoutes from "./routes/users.js";
 
 import initWebSocket from "./sockets/index.js";
@@ -59,9 +59,9 @@ app.use("/messages", messageRoutes)
 
 app.use("/notifications", notificationRoutes);
 
-app.use("/students", studentRoutes);
+
 app.use("/submissions", submissionRoutes);
-app.use("/teachers", teacherRoutes);
+
 app.use("/users", userRoutes);
 
 

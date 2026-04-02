@@ -46,6 +46,40 @@ const getAllUsers = async () => {
     });
 };
 
+// Get all teachers
+const getAllTeachers = async () => {
+    try {
+        return await prisma.user.findMany({
+            where: {
+                teacher: { isNot: null }, // Fetch users with a teacher role
+            },
+            include: {
+                teacher: true, // Include teacher-specific details
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching teachers:', error);
+        throw new Error('Failed to fetch teachers');
+    }
+};
+
+// Get all students
+const getAllStudents = async () => {
+    try {
+        return await prisma.user.findMany({
+            where: {
+                student: { isNot: null }, // Fetch users with a student role
+            },
+            include: {
+                student: true, // Include student-specific details
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        throw new Error('Failed to fetch students');
+    }
+};
+
 const getUserById = async (id) => {
     return await prisma.user.findUnique({
         where: { id: parseInt(id) },
@@ -164,14 +198,14 @@ const updateUserProfile = async (id, { name, avatarKey, bio }) => {
     });
 };
 
-
 export default {
     createUser,
     getAllUsers,
+    getAllTeachers, // Added function
+    getAllStudents, // Added function
     getUserById,
     updateUser,
     deleteUser,
     getUserProfileById,
     updateUserProfile,
-
 };

@@ -49,10 +49,65 @@ const createUser = [
 const getAllUsers = async (req, res) => {
     try {
         const users = await userService.getAllUsers();
-        res.status(200).json(users);
+
+        const usersWithSignedUrls = await Promise.all(
+            users.map(async (user) => {
+                let signedAvatarUrl = null;
+                if (user.avatarKey) {
+                    signedAvatarUrl = await generateSignedUrl(user.avatarKey);
+                }
+                return { ...user, avatarUrl: signedAvatarUrl };
+            })
+        );
+
+        res.status(200).json(usersWithSignedUrls);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};
+
+// Get all teachers
+const getAllTeachers = async (req, res) => {
+    try {
+        const teachers = await userService.getAllTeachers();
+
+        const teachersWithSignedUrls = await Promise.all(
+            teachers.map(async (teacher) => {
+                let signedAvatarUrl = null;
+                if (teacher.avatarKey) {
+                    signedAvatarUrl = await generateSignedUrl(teacher.avatarKey);
+                }
+                return { ...teacher, avatarUrl: signedAvatarUrl };
+            })
+        );
+
+        res.status(200).json(teachersWithSignedUrls);
+    } catch (error) {
+        console.error('Error fetching teachers:', error);
+        res.status(500).json({ error: 'Failed to fetch teachers' });
+    }
+};
+
+// Get all students
+const getAllStudents = async (req, res) => {
+    try {
+        const students = await userService.getAllStudents();
+
+        const studentsWithSignedUrls = await Promise.all(
+            students.map(async (student) => {
+                let signedAvatarUrl = null;
+                if (student.avatarKey) {
+                    signedAvatarUrl = await generateSignedUrl(student.avatarKey);
+                }
+                return { ...student, avatarUrl: signedAvatarUrl };
+            })
+        );
+
+        res.status(200).json(studentsWithSignedUrls);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Failed to fetch students' });
     }
 };
 
@@ -76,7 +131,13 @@ const getUserById = [
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
-            res.status(200).json(user);
+
+            let signedAvatarUrl = null;
+            if (user.avatarKey) {
+                signedAvatarUrl = await generateSignedUrl(user.avatarKey);
+            }
+
+            res.status(200).json({ ...user, avatarUrl: signedAvatarUrl });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Failed to fetch user' });
@@ -105,16 +166,11 @@ const getUserProfileById = [
             }
 
             let signedAvatarUrl = null;
-
-            // If the user has an avatarKey, generate the signed URL
             if (userProfile.avatarKey) {
                 signedAvatarUrl = await generateSignedUrl(userProfile.avatarKey);
             }
 
-            res.status(200).json({
-                ...userProfile,
-                avatarUrl: signedAvatarUrl, // Include the signed URL in the response
-            });
+            res.status(200).json({ ...userProfile, avatarUrl: signedAvatarUrl });
         } catch (error) {
             console.error('Error fetching user profile:', error);
             res.status(500).json({ error: 'Failed to fetch user profile' });
@@ -260,5 +316,6 @@ export default {
     updateUser,
     deleteUser,
     updateUserProfile,
-
+    getAllTeachers,
+    getAllStudents,
 };
