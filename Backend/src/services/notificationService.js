@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const createNotification = async (data) => {
-    const { is_global, is_for_students, is_for_teachers, class_ids, created_by, ...rest } = data;
+    const { is_global, is_for_students, is_for_teachers, class_ids, created_by, files, ...rest } = data;
 
     let recipients = [];
 
@@ -18,7 +18,7 @@ const createNotification = async (data) => {
     // If the notification is for students, attach it to all students
     if (is_for_students) {
         const allStudents = await prisma.user.findMany({
-            where: { student: { isNot: null } }, // Only users with a student relation
+            where: { student: { isNot: null } },
             select: { id: true },
         });
         recipients = [...recipients, ...allStudents.map((student) => ({ id: student.id }))];
@@ -38,7 +38,7 @@ const createNotification = async (data) => {
         const classStudents = await prisma.user.findMany({
             where: {
                 student: {
-                    class_id: { in: class_ids.map((id) => parseInt(id)) }, // Students in the specified classes
+                    class_id: { in: class_ids },
                 },
             },
             select: { id: true },
@@ -46,12 +46,12 @@ const createNotification = async (data) => {
         recipients = [...recipients, ...classStudents.map((student) => ({ id: student.id }))];
     }
 
-
+    // Remove duplicate recipients
     const uniqueRecipients = Array.from(new Set(recipients.map((r) => r.id))).map((id) => ({
         id,
     }));
 
-
+    // Create the notification and attach recipients and files
     return await prisma.notification.create({
         data: {
             ...rest,
@@ -60,23 +60,33 @@ const createNotification = async (data) => {
             is_for_students,
             is_for_teachers,
             classes: {
-                connect: class_ids?.map((id) => ({ id: parseInt(id) })) || [], // Associate with classes
+                connect: class_ids?.map((id) => ({ id })) || [],
             },
             recipients: {
                 connect: uniqueRecipients,
+            },
+            files: {
+                connect: files, // Attach files to the notification
             },
         },
     });
 };
 
 const getAllNotifications = async () => {
-    return await prisma.notification.findMany({});
+    return await prisma.notification.findMany({
+        include: {
+            files: true,
+        },
+    });
 };
 
 const getNotificationById = async (id) => {
     return await prisma.notification.findUnique({
         where: { id: parseInt(id) },
-    });
+        include: {
+            files: true,
+        },
+    },);
 };
 
 const deleteNotification = async (id) => {
@@ -91,6 +101,9 @@ const getNotificationsByUserId = async (userId) => {
             recipients: {
                 some: { id: parseInt(userId) }, // Check if the user is a recipient
             },
+        },
+        include: {
+            files: true, // Include files in the response
         },
         orderBy: {
             created_at: 'desc', // Optional: Order notifications by creation date
@@ -114,6 +127,6 @@ export default {
     getAllNotifications,
     getNotificationById,
     deleteNotification,
-    getNotificationsByUserId, // Export the new function
-    markNotificationAsRead, // Export the markNotificationAsRead function
+    getNotificationsByUserId,
+    markNotificationAsRead,
 };

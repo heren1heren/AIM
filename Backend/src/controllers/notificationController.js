@@ -8,16 +8,16 @@ const notificationUpload = multer({ storage: multer.memoryStorage() });
 
 // Create a notification
 const createNotification = [
-    notificationUpload.single('file'), // Handle file upload
+    notificationUpload.array('files', 5), // Handle multiple file uploads (max 5 files)
     // Validation rules
     body('title').isString().notEmpty().withMessage('Title is required'),
     body('message').isString().notEmpty().withMessage('Message is required'),
-    body('created_by').isInt().withMessage('Created by must be a valid user ID'),
+    body('created_by').isInt().withMessage('Created by must be a valid user ID').toInt(), // Validate first, then sanitize
     body('class_ids').optional().isArray().withMessage('class_ids must be an array of integers'),
-    body('class_ids.*').optional().isInt().withMessage('Each class_id must be a valid integer'),
-    body('is_for_students').optional().isBoolean().withMessage('is_for_students must be a boolean'),
-    body('is_for_teachers').optional().isBoolean().withMessage('is_for_teachers must be a boolean'),
-    body('is_global').optional().isBoolean().withMessage('is_global must be a boolean'),
+    body('class_ids.*').optional().isInt().withMessage('Each class_id must be a valid integer').toInt(), // Validate first, then sanitize
+    body('is_for_students').optional().isBoolean().withMessage('is_for_students must be a boolean').toBoolean(),
+    body('is_for_teachers').optional().isBoolean().withMessage('is_for_teachers must be a boolean').toBoolean(),
+    body('is_global').optional().isBoolean().withMessage('is_global must be a boolean').toBoolean(),
 
     // Controller logic
     async (req, res) => {
@@ -30,29 +30,28 @@ const createNotification = [
         const { title, message, created_by, class_ids, is_for_students, is_for_teachers, is_global } = req.body;
 
         try {
-            let fileKey = null;
-            let signedFileUrl = null;
+            const uploadedFiles = [];
 
-            // If a file is uploaded, handle the file upload
-            if (req.file) {
-                fileKey = `${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
-                console.log('Generated fileKey:', fileKey);
+            // If files are uploaded, handle the file uploads
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const fileKey = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+                    console.log('Generated fileKey:', fileKey);
 
-                // Upload the file to Wasabi
-                await uploadToWasabi({ file: req.file, fileKey });
+                    // Upload the file to Wasabi
+                    await uploadToWasabi({ file, fileKey });
 
-                // Save the file metadata in the database
-                const savedFile = await fileService.uploadNotificationFile({
-                    key: fileKey,
-                    filename: req.file.originalname,
-                    mimetype: req.file.mimetype,
-                    size: req.file.size,
-                });
+                    // Save the file metadata in the database
+                    const savedFile = await fileService.uploadFile({
+                        key: fileKey,
+                        uploaded_by: created_by, // Already converted to integer by express-validator
+                        filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    });
 
-                console.log('Saved file metadata:', savedFile);
-
-                // Generate the signed URL for the file
-                signedFileUrl = await generateSignedUrl(fileKey);
+                    uploadedFiles.push(savedFile);
+                }
             }
 
             // Create the notification
@@ -60,16 +59,16 @@ const createNotification = [
                 title,
                 message,
                 created_by,
-                class_ids: class_ids ? class_ids.map((id) => parseInt(id)) : [],
+                class_ids: class_ids || [],
                 is_for_students,
                 is_for_teachers,
                 is_global,
-                fileKey, // Attach the file key to the notification
+                files: uploadedFiles.map((file) => ({ id: file.id })),
             });
 
             res.status(201).json({
                 ...notification,
-                fileUrl: signedFileUrl, // Include the signed file URL in the response
+                files: uploadedFiles,
             });
         } catch (error) {
             console.error('Error creating notification:', error);
@@ -110,7 +109,22 @@ const getNotificationById = [
                 return res.status(404).json({ error: 'Notification not found' });
             }
 
-            res.status(200).json(notification);
+            // Generate signed URLs for each file
+            const filesWithSignedUrls = await Promise.all(
+                notification.files.map(async (file) => {
+                    const signedUrl = await generateSignedUrl(file.key);
+                    return {
+                        ...file,
+                        signedUrl,
+                    };
+                })
+            );
+
+            // Return the notification with signed URLs for files
+            res.status(200).json({
+                ...notification,
+                files: filesWithSignedUrls,
+            });
         } catch (error) {
             console.error('Error fetching notification:', error);
             res.status(500).json({ error: 'Failed to fetch notification' });
