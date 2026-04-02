@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     fetchUsers as fetchUsersService,
+    fetchTeachers as fetchTeachersService,
+    fetchStudents as fetchStudentsService,
     createUser as createUserService,
     getUserById as getUserByIdService,
     updateUser as updateUserService,
@@ -16,12 +18,10 @@ import {
 export const useUsers = (fetchUsersEnabled: boolean = false) => {
     const queryClient = useQueryClient();
 
-    // Fetch all users
     const { data: users, isLoading: usersLoading, isError: usersError } = useQuery({
         queryKey: ["users"],
         queryFn: fetchUsersService,
-        enabled: fetchUsersEnabled
-
+        enabled: fetchUsersEnabled,
     });
 
     // Fetch user profile by ID
@@ -88,4 +88,28 @@ export const useUsers = (fetchUsersEnabled: boolean = false) => {
         updateUser: updateUser.mutateAsync,
         deleteUser: deleteUser.mutateAsync,
     };
+};
+
+export const useTeachers = (fetchEnabled: boolean = false) => {
+    return useQuery({
+        queryKey: ["teachers"],
+        queryFn: fetchTeachersService,
+        enabled: fetchEnabled,
+    });
+};
+
+export const useStudents = (fetchEnabled: boolean = false) => {
+    return useQuery({
+        queryKey: ["students"],
+        queryFn: fetchStudentsService,
+        enabled: fetchEnabled,
+    });
+};
+
+export const useUserProfile = (id: number) => {
+    return useQuery({
+        queryKey: ["userProfile", id],
+        queryFn: () => getUserProfileByIdService(id),
+        staleTime: 5 * 60 * 1000,
+    });
 };

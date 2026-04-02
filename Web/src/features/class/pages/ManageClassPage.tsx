@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
     Box,
     Typography,
@@ -10,62 +10,45 @@ import {
     TableRow,
     Paper,
     Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-
 } from "@mui/material";
+import AddClassDialog from "../components/AddClassDialog";
+import { useClasses } from "../../../hooks/useClasses";
 import { useNavigate } from "react-router-dom";
-import { useClass } from "../../../hooks/useClasses";
 
 export default function ManageClassesPage() {
     const {
         classes,
-        fetchClasses,
+        classesLoading,
+        classesError,
         createClass,
-        loading,
-        error,
-    } = useClass();
-
-
-    useEffect(() => {
-        fetchClasses();
-    }, []);
-
-
-    const navigate = useNavigate();
+        deleteClass,
+    } = useClasses(true);
 
     const [openDialog, setOpenDialog] = useState(false);
-    const [newClass, setNewClass] = useState({
-        name: "",
-        description: "",
-        teacher_id: "",
-        start_date: "",
-        end_date: "",
-    });
+    const navigate = useNavigate();
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setNewClass((prev) => ({ ...prev, [name]: value }));
+    const handleAddClass = async (classData: {
+        name: string;
+        description: string;
+        teacher_name: string;
+        teacher_id: number;
+        start_date: string;
+        end_date: string;
+    }) => {
+        try {
+            await createClass(classData);
+            setOpenDialog(false);
+        } catch (error) {
+            console.error("Error creating class:", error);
+        }
     };
 
-    const handleAddClass = async () => {
-        await createClass({
-            ...newClass,
-            teacher_id: parseInt(newClass.teacher_id),
-            start_date: new Date(newClass.start_date).toISOString(),
-            end_date: new Date(newClass.end_date).toISOString(),
-        });
-        setOpenDialog(false);
-        setNewClass({
-            name: "",
-            description: "",
-            teacher_id: "",
-            start_date: "",
-            end_date: "",
-        });
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteClass(id);
+        } catch (error) {
+            console.error("Error deleting class:", error);
+        }
     };
 
     return (
@@ -83,8 +66,8 @@ export default function ManageClassesPage() {
                 Add Class
             </Button>
 
-            {loading && <Typography>Loading...</Typography>}
-            {error && <Typography color="error">{error}</Typography>}
+            {classesLoading && <Typography>Loading classes...</Typography>}
+            {classesError && <Typography>Error loading classes</Typography>}
 
             <TableContainer component={Paper}>
                 <Table>
@@ -94,124 +77,52 @@ export default function ManageClassesPage() {
                                 <Typography fontWeight={600}>Class Name</Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography fontWeight={600}>Teacher</Typography>
+                                <Typography fontWeight={600}>Description</Typography>
                             </TableCell>
-                            <TableCell align="center">
-                                <Typography fontWeight={600}>Assignments</Typography>
+                            <TableCell>
+                                <Typography fontWeight={600}>Teacher Name</Typography>
                             </TableCell>
-                            <TableCell align="center">
-                                <Typography fontWeight={600}>Attendances</Typography>
-                            </TableCell>
-                            <TableCell align="center">
-                                <Typography fontWeight={600}>Students</Typography>
+                            <TableCell align="right">
+                                <Typography fontWeight={600}>Actions</Typography>
                             </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {Array.isArray(classes) && classes.length > 0 ? (
-                            classes.map((cls) => (
-                                <TableRow key={cls.id}>
-                                    <TableCell>{cls.name}</TableCell>
-                                    <TableCell>{cls.teacher_id}</TableCell>
-                                    <TableCell align="center">
-                                        <Button
-                                            variant="contained"
-                                            color="secondary"
-                                            size="small"
-                                            onClick={() => navigate(`/class/${cls.id}/assignments`)}
-                                        >
-                                            View
-                                        </Button>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Button
-                                            variant="contained"
-                                            color="secondary"
-                                            size="small"
-                                            onClick={() => navigate(`/class/${cls.id}/attendance`)}
-                                        >
-                                            View
-                                        </Button>
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Button
-                                            variant="contained"
-                                            color="secondary"
-                                            size="small"
-                                            onClick={() => navigate(`/class/${cls.id}/students`)}
-                                        >
-                                            View
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center">
-                                    No classes available.
+                        {classes?.map((cls) => (
+                            <TableRow key={cls.id}>
+                                <TableCell>{cls.name}</TableCell>
+                                <TableCell>{cls.description}</TableCell>
+                                <TableCell>{cls.teacher.name}</TableCell>
+                                <TableCell align="right">
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        size="small"
+                                        onClick={() => navigate(`/class/${cls.id}`)}
+                                        sx={{ mr: 1 }}
+                                    >
+                                        Manage
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="error"
+                                        size="small"
+                                        onClick={() => handleDelete(cls.id)}
+                                    >
+                                        Delete
+                                    </Button>
                                 </TableCell>
                             </TableRow>
-                        )}
+                        ))}
                     </TableBody>
                 </Table>
             </TableContainer>
 
-            {/* Add Class Dialog */}
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add New Class</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        label="Class Name"
-                        name="name"
-                        value={newClass.name}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Description"
-                        name="description"
-                        value={newClass.description}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Teacher ID"
-                        name="teacher_id"
-                        value={newClass.teacher_id}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="Start Date"
-                        name="start_date"
-                        type="date"
-                        value={newClass.start_date}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                    <TextField
-                        label="End Date"
-                        name="end_date"
-                        type="date"
-                        value={newClass.end_date}
-                        onChange={handleInputChange}
-                        fullWidth
-                        margin="dense"
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)} color="secondary">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleAddClass} color="primary">
-                        Add
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <AddClassDialog
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+                onSubmit={handleAddClass}
+            />
         </Box>
     );
 }

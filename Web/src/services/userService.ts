@@ -3,10 +3,10 @@ import api from "./api"; // Axios instance with interceptors
 export interface User {
     id: number;
     name: string;
-    username: string; 
-    avatarKey?: string; 
-    avatarUrl?: string; 
-    bio?: string; // User's bio
+    username: string;
+    avatarKey?: string;
+    avatarUrl?: string;
+    bio?: string;
     isAdmin: boolean;
     isTeacher: boolean;
     isStudent: boolean;
@@ -15,7 +15,7 @@ export interface User {
 export interface UserProfile {
     name: string;
     avatarKey?: string;
-    avatarUrl?: string; 
+    avatarUrl?: string;
     bio?: string;
 }
 
@@ -52,6 +52,18 @@ export const fetchUsers = async (): Promise<User[]> => {
     return response.data;
 };
 
+// Fetch all teachers
+export const fetchTeachers = async (): Promise<User[]> => {
+    const response = await api.get("/users/teachers");
+    return response.data;
+};
+
+// Fetch all students
+export const fetchStudents = async (): Promise<User[]> => {
+    const response = await api.get("/users/students");
+    return response.data;
+};
+
 // Create a new user
 export const createUser = async (newUser: CreateUserInput): Promise<User> => {
     const response = await api.post("/users", newUser);
@@ -78,17 +90,17 @@ export const deleteUser = async (id: number): Promise<void> => {
 // Update user profile (including avatar upload)
 export const updateUserProfile = async (
     id: number,
-    updatedData: UpdateUserProfileInput 
+    updatedData: UpdateUserProfileInput
 ): Promise<UserProfile> => {
     const response = await api.patch(`/users/${id}/profile`, updatedData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
     });
-    return response.data.user; // Return the updated user profile from the response
+    return response.data.user;
 };
 
-// Get user profile by ID
+
 export const getUserProfileById = async (id: number): Promise<UserProfile> => {
     const response = await api.get(`/users/${id}/profile`);
     return response.data;

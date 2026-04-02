@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUsers } from "../../../hooks/useUsers";
 import {
     Box,
@@ -11,6 +11,7 @@ import {
     TableRow,
     Paper,
     Button,
+    Avatar,
 } from "@mui/material";
 
 import AddUserDialog from "../components/AddUserDialog";
@@ -27,20 +28,17 @@ export default function ManageUsersPage() {
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("student");
 
-    // Edit User State
     const [editName, setEditName] = useState("");
     const [editUsername, setEditUsername] = useState("");
     const [editPassword, setEditPassword] = useState("");
     const [editRole, setEditRole] = useState("student");
 
-    // Dialog States
     const [openAddDialog, setOpenAddDialog] = useState(false);
     const [openEditDialog, setOpenEditDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<number | null>(null);
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
-    // Handle Create User
     const handleCreateUser = async () => {
         const roleData = {
             isStudent: role === "student",
@@ -54,10 +52,8 @@ export default function ManageUsersPage() {
             ...roleData,
         });
 
-        // Invalidate the "users" query to trigger a refetch
         queryClient.invalidateQueries(["users"]);
 
-        // Reset fields
         setName("");
         setUsername("");
         setPassword("");
@@ -65,7 +61,6 @@ export default function ManageUsersPage() {
         setOpenAddDialog(false);
     };
 
-    // Handle Edit User
     const handleEditUser = async () => {
         if (selectedUserId !== null) {
             await updateUser({
@@ -77,11 +72,9 @@ export default function ManageUsersPage() {
                 },
             });
 
-            // Invalidate the "users" query to trigger a refetch
             queryClient.invalidateQueries(["users"]);
         }
 
-        // Reset fields
         setEditName("");
         setEditUsername("");
         setEditPassword("");
@@ -90,7 +83,6 @@ export default function ManageUsersPage() {
         setOpenEditDialog(false);
     };
 
-    // Handle Delete User
     const handleDeleteClick = (userId: number) => {
         setUserToDelete(userId);
         setOpenDeleteDialog(true);
@@ -100,7 +92,6 @@ export default function ManageUsersPage() {
         if (userToDelete !== null) {
             await deleteUser(userToDelete);
 
-            // Invalidate the "users" query to trigger a refetch
             queryClient.invalidateQueries(["users"]);
         }
         setUserToDelete(null);
@@ -112,7 +103,6 @@ export default function ManageUsersPage() {
         setOpenDeleteDialog(false);
     };
 
-    // Open Edit Dialog
     const openEditDialogForUser = (user: any) => {
         setSelectedUserId(user.id);
         setEditName(user.name || "");
@@ -122,7 +112,6 @@ export default function ManageUsersPage() {
         setOpenEditDialog(true);
     };
 
-    // Get Role
     const getRole = (user: any) => {
         if (user.teacher) return "Teacher";
         if (user.student) return "Student";
@@ -151,6 +140,7 @@ export default function ManageUsersPage() {
                 <Table>
                     <TableHead>
                         <TableRow>
+                            <TableCell />
                             <TableCell>
                                 <Typography fontWeight={600}>Name</Typography>
                             </TableCell>
@@ -168,6 +158,11 @@ export default function ManageUsersPage() {
                     <TableBody>
                         {users?.map((user) => (
                             <TableRow key={user.id}>
+                                <TableCell>
+                                    <Avatar src={user.avatarUrl || ""} alt={user.name || "User"}>
+                                        {!user.avatarUrl && user.name ? user.name[0].toUpperCase() : ""}
+                                    </Avatar>
+                                </TableCell>
                                 <TableCell>{user.name || "N/A"}</TableCell>
                                 <TableCell>{user.username}</TableCell>
                                 <TableCell>{getRole(user)}</TableCell>
