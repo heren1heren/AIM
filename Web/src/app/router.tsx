@@ -8,31 +8,37 @@ import HomePage from "../features/common/pages/HomePage"
 
 import ManageClassesPage from "../features/class/pages/ManageClassPage";
 import ManageNotificationsPage from "../features/notification/pages/ManageNotificationPage";
-import ManageUsersPage from "../features/user/pages/ManageUsersPage"
+import ManageUsersPage from "../features/user/pages/ManageUsersPage";
 
 import InternalServerErrorPage from "../features/auth/pages/500Page";
-import UnauthorizedPage from "../features/auth/pages/401Page"; // Import 401 page
-import ForbiddenPage from "../features/auth/pages/403Page"; // Import 403 page
-import NotFoundPage from "../features/auth/pages/404Page"; // Import 404 page
+import UnauthorizedPage from "../features/auth/pages/401Page";
+import ForbiddenPage from "../features/auth/pages/403Page";
+import NotFoundPage from "../features/auth/pages/404Page";
 import MessagePage from "../features/common/pages/MessagePage";
 import NotificationDetailPage from "../features/notification/pages/NotificationDetailPage";
 import UserProfilePage from "../features/user/pages/UserProfilePage";
+import ClassDetailPage from "../features/class/pages/ClassDetailPage";
+import ManageContentPage from "../features/content/pages/ManageContentPage";
+import ContentDetailPage from "../features/content/pages/ContentDetailPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <ShareLayout />,
         children: [
-            // Common routes
             { index: true, element: <HomePage /> },
+
+            // Messages
             {
-                path: "/messages", element: (
+                path: "/messages",
+                element: (
                     <ProtectedRoute allowedRoles={["admin", "student", "teacher"]}>
                         <MessagePage />
                     </ProtectedRoute>
                 ),
             },
-            // USERS Route
+
+            // Users
             {
                 path: "/users",
                 element: (
@@ -50,7 +56,7 @@ export const router = createBrowserRouter([
                 ),
             },
 
-            // CLASSES Route
+            // Classes
             {
                 path: "/classes",
                 element: (
@@ -60,67 +66,103 @@ export const router = createBrowserRouter([
                 ),
             },
             {
-                path: "/teacher/:id/classes",
+                path: "/teacher/:teacherId/classes",
                 element: (
                     <ProtectedRoute allowedRoles={["teacher"]}>
                         <ManageClassesPage />
                     </ProtectedRoute>
                 ),
             },
-            // class detail page
             {
-                path: "/classes/:id",
+                path: "/classes/:classId",
                 element: (
                     <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
-                        <div></div>
+                        <ClassDetailPage />
                     </ProtectedRoute>
                 ),
-                children: [
-                    {
-                        path: "assignments", // Assignments Page for the Class
-                        element: (
-                            <ProtectedRoute allowedRoles={["teacher"]}>
-                                <div></div> {/* Page to display all assignments for the class */}
-                            </ProtectedRoute>
-                        ),
-                    },
-                    {
-                        path: "assignments/:assignmentId",
-                        element: (
-                            <ProtectedRoute allowedRoles={["teacher"]}>
-                                <div></div> {/* Page to display assignment details */}
-                            </ProtectedRoute>
-                        ),
-                        children: [
-                            {
-                                path: "submissions", // Submissions for the Assignment
-                                element: (
-                                    <ProtectedRoute allowedRoles={["teacher"]}>
-                                        <div></div> {/* Page to display all submissions for the assignment */}
-                                    </ProtectedRoute>
-                                ),
-                            },
-                        ],
-                    },
-                    {
-                        path: "content", // Content Page for the Class
-                        element: (
-                            <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
-                                <div></div>{/* Page to display all content for the class */}
-                            </ProtectedRoute>
-                        ),
-                    },
-                    {
-                        path: "content/:id", // Content Page for the Class
-                        element: (
-                            <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
-                                <div></div>{/* Page to display all content for the class */}
-                            </ProtectedRoute>
-                        ),
-                    },
-                ],
             },
-            // NOTIFICATIONS Route
+
+            // Assignments
+            {
+                path: "/classes/:classId/assignments",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher", "admin", "student"]}>
+                        <div>Assignments Page</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/classes/:classId/assignments/:assignmentId",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <div>Assignment Details</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/classes/:classId/assignments/:assignmentId/submissions",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <div>Submissions Page</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/classes/:classId/assignments/:assignmentId/submissions/:submissionId",
+                element: (
+                    <ProtectedRoute allowedRoles={["teacher"]}>
+                        <div>Submission Details</div>
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Attendances
+            {
+                path: "/attendances",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div>Attendances Page</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/attendances/:attendanceId",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div>Attendance Details</div>
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Students
+            {
+                path: "/students",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div>Students Page</div>
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/students/:studentId",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <div>Student Details</div>
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Content
+            {
+                path: "/classes/:classId/contents/:contentId",
+                element: (
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <ContentDetailPage />
+                    </ProtectedRoute>
+                ),
+            },
+
+            // Notifications
             {
                 path: "/notifications",
                 element: (
@@ -129,52 +171,50 @@ export const router = createBrowserRouter([
                     </ProtectedRoute>
                 ),
             },
-            // notification details
             {
-                path: "/notifications/:id",
+                path: "/notifications/:notificationId",
                 element: (
-                    <ProtectedRoute allowedRoles={["admim", "teacher", "student"]}>
-                        <NotificationDetailPage /> {/* Page to display notification details */}
+                    <ProtectedRoute allowedRoles={["admin", "teacher", "student"]}>
+                        <NotificationDetailPage />
                     </ProtectedRoute>
                 ),
             },
-            // ASSIGNMENTS Route
 
+            // Student Assignments and Submissions
             {
-                path: "/student/:id/assignments",
-                element: (
-                    <ProtectedRoute allowedRoles={["student"]}>
-                        <div></div>
-                    </ProtectedRoute>
-                ),
-            },
-            // SUBMISSIONS Route
-            {
-                path: "/student/:id/submissions",
+                path: "/student/:studentId/assignments",
                 element: (
                     <ProtectedRoute allowedRoles={["student"]}>
-                        <div></div>
+                        <div>Student Assignments</div>
                     </ProtectedRoute>
                 ),
             },
-
-
-            // CONTENT Route
-
+            {
+                path: "/student/:studentId/submissions",
+                element: (
+                    <ProtectedRoute allowedRoles={["student"]}>
+                        <div>Student Submissions</div>
+                    </ProtectedRoute>
+                ),
+            },
         ],
     },
+
+    // Authentication
     {
         path: "/auth",
         element: <AuthLayout />,
         children: [{ path: "login", element: <SignInPage /> }],
     },
+
+    // Error Pages
     {
         path: "/401",
-        element: <UnauthorizedPage />, // 401 Unauthorized page
+        element: <UnauthorizedPage />,
     },
     {
         path: "/403",
-        element: <ForbiddenPage />, // 403 Forbidden page
+        element: <ForbiddenPage />,
     },
     {
         path: "/500",
@@ -182,6 +222,6 @@ export const router = createBrowserRouter([
     },
     {
         path: "*",
-        element: <NotFoundPage />, // 404 Not Found page
+        element: <NotFoundPage />,
     },
 ]);

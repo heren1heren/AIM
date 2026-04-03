@@ -7,7 +7,17 @@ export interface Class {
     teacher_id: number;
     start_date: string;
     end_date: string;
-    student_ids?: number[];
+    created_at: string;
+    teacher: {
+        id: number;
+        user_id: number;
+        name: string;
+    };
+    students: {
+        id: number;
+        user_id: number;
+        class_id: number;
+    }[];
 }
 
 export interface CreateClassInput {

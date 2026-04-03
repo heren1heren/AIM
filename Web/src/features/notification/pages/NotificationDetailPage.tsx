@@ -3,9 +3,9 @@ import { Box, Typography, Paper, CircularProgress, List, ListItem, Link } from "
 import { useNotifications } from "../../../hooks/useNotifications";
 
 export default function NotificationDetailPage() {
-    const { id } = useParams(); // Get the notification ID from the URL
+    const { notificationId } = useParams(); // Get the notification ID from the URL
     const { useNotificationById } = useNotifications(); // Access the hook
-    const { data: notification, isLoading, isError } = useNotificationById(parseInt(id || "0"));
+    const { data: notification, isLoading, isError } = useNotificationById(parseInt(notificationId || "0"));
 
     // Format the date
     const formatDate = (dateString: string) => {
