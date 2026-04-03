@@ -47,8 +47,8 @@ export const useContents = (fetchEnabled: boolean = false) => {
     const updateContentMutation = useMutation({
         mutationFn: ({ id, updatedContent }: { id: number; updatedContent: any }) =>
             updateContent(id, updatedContent),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["contents"] }); // Refresh contents list
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: ["content", id] }); // Matches useContentById
         },
     });
 
