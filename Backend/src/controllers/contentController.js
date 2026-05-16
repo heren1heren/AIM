@@ -10,6 +10,7 @@ const contentUpload = multer({ storage: multer.memoryStorage() });
 const handleValidationErrors = (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
         return res.status(400).json({ errors: errors.array() });
     }
 };
@@ -17,21 +18,26 @@ const handleValidationErrors = (req, res) => {
 // Create content
 const createContent = [
     contentUpload.array('files', 5),
-
-    // Validation rules
     body('title').isString().notEmpty().withMessage('Title is required'),
     body('description').optional().isString().withMessage('Description must be a string'),
     body('class_id').isInt().withMessage('Class ID must be a valid integer').toInt(),
     body('assignedDate').isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
-    body('uploader_id').isInt().withMessage('Uploader ID must be a valid integer').toInt(), // Validate uploader_id
+    body('uploader_id').isInt().withMessage('Uploader ID must be a valid integer').toInt(),
 
-    // Controller logic
     async (req, res) => {
-        handleValidationErrors(req, res);
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-        const { title, description, urls, class_id, assignedDate, uploader_id } = req.body;
+        const { title, description, assignedDate, class_id, uploader_id } = req.body;
 
         try {
+            const parsedAssignedDate = new Date(assignedDate);
+            if (isNaN(parsedAssignedDate.getTime())) {
+                return res.status(400).json({ error: 'Invalid assignedDate format' });
+            }
+
             const uploadedFiles = [];
 
             if (req.files && req.files.length > 0) {
@@ -40,7 +46,7 @@ const createContent = [
                     await uploadToWasabi({ file, fileKey });
                     const savedFile = await fileService.uploadFile({
                         key: fileKey,
-                        uploaded_by: parseInt(uploader_id), // Pass the uploader ID
+                        uploaded_by: uploader_id,
                         filename: file.originalname,
                         mimetype: file.mimetype,
                         size: file.size,
@@ -52,19 +58,18 @@ const createContent = [
             const newContent = await contentService.createContent({
                 title,
                 description,
-                urls,
                 class_id,
-                assignedDate: new Date(assignedDate),
-                files: uploadedFiles.map((file) => ({ id: file.id })), // Attach file IDs to the content
+                assignedDate: parsedAssignedDate,
+                files: uploadedFiles.map((file) => ({ id: file.id })),
             });
 
-            res.status(201).json({
+            return res.status(201).json({
                 ...newContent,
                 files: uploadedFiles,
             });
         } catch (error) {
             console.error('Error creating content:', error);
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: 'Failed to create content' });
         }
     },
 ];
@@ -130,34 +135,67 @@ const getContentById = [
 
 // Update content
 const updateContent = [
-    // Validation rules
+    contentUpload.array('files', 5),
     param('id').isInt().withMessage('Content ID must be a valid integer'),
     body('title').optional().isString().withMessage('Title must be a string'),
     body('description').optional().isString().withMessage('Description must be a string'),
-    body('urls').optional().isArray().withMessage('URLs must be an array'),
     body('class_id').optional().isInt().withMessage('Class ID must be a valid integer'),
     body('assignedDate').optional().isISO8601().withMessage('Assigned date must be a valid ISO 8601 date'),
+    body('uploader_id').isInt().withMessage('Uploader ID must be a valid integer').toInt(),
 
-    // Controller logic
     async (req, res) => {
         handleValidationErrors(req, res);
 
         const { id } = req.params;
-        const { title, description, urls, class_id, assignedDate } = req.body;
+        const { title, description, class_id, assignedDate, uploader_id } = req.body;
 
         try {
+            const parsedAssignedDate = assignedDate ? new Date(assignedDate) : undefined;
+
+            const existingContent = await contentService.getContentById(parseInt(id));
+            if (!existingContent) {
+                return res.status(404).json({ error: 'Content not found' });
+            }
+
+            const existingFiles = existingContent.files;
+
+            const newFileKeys = req.files.map((file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`);
+            const filesToDelete = existingFiles.filter((file) => !newFileKeys.includes(file.key));
+
+            for (const file of filesToDelete) {
+                await fileService.deleteFile(file.id);
+            }
+
+            const uploadedFiles = [];
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const fileKey = `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+                    await uploadToWasabi({ file, fileKey });
+                    const savedFile = await fileService.uploadFile({
+                        key: fileKey,
+                        uploaded_by: uploader_id,
+                        filename: file.originalname,
+                        mimetype: file.mimetype,
+                        size: file.size,
+                    });
+                    uploadedFiles.push(savedFile);
+                }
+            }
+
             const updatedContent = await contentService.updateContent(parseInt(id), {
                 title,
                 description,
-                urls,
                 class_id,
-                assignedDate: assignedDate ? new Date(assignedDate) : undefined,
+                assignedDate: parsedAssignedDate,
+                files: {
+                    set: [...uploadedFiles.map((file) => ({ id: file.id })), ...existingFiles.filter((file) => newFileKeys.includes(file.key))],
+                },
             });
 
             res.status(200).json(updatedContent);
         } catch (error) {
             console.error('Error updating content:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Failed to update content' });
         }
     },
 ];

@@ -166,6 +166,52 @@ const transferDataClass = [
     },
 ];
 
+// Get classes by student ID
+const getClassesByStudentId = async (studentId) => {
+    try {
+        const student = await prisma.student.findUnique({
+            where: { id: studentId },
+            include: {
+                class: {
+                    include: {
+                        teacher: {
+                            include: { user: { select: { name: true } } },
+                        },
+                        students: {
+                            include: { user: { select: { name: true } } },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!student || !student.class) {
+            return null;
+        }
+
+        return {
+            id: student.class.id,
+            name: student.class.name,
+            description: student.class.description,
+            start_date: student.class.start_date,
+            end_date: student.class.end_date,
+            teacher: {
+                id: student.class.teacher.id,
+                user_id: student.class.teacher.user_id,
+                name: student.class.teacher.user.name,
+            },
+            students: student.class.students.map((s) => ({
+                id: s.id,
+                user_id: s.user_id,
+                name: s.user.name,
+            })),
+        };
+    } catch (error) {
+        console.error('Error fetching classes by student ID:', error);
+        throw new Error('Failed to fetch classes by student ID');
+    }
+};
+
 export default {
     createClass,
     getAllClasses,
@@ -173,4 +219,5 @@ export default {
     updateClass,
     deleteClass,
     transferDataClass,
+    getClassesByStudentId,
 };

@@ -29,8 +29,8 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 app.use(cookieParser());
 app.use(
@@ -63,7 +63,6 @@ app.use("/notifications", notificationRoutes);
 app.use("/submissions", submissionRoutes);
 
 app.use("/users", userRoutes);
-
 
 
 // Create HTTP server

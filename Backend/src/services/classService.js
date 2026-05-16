@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import userService from './userService.js';
 
 const prisma = new PrismaClient();
 
@@ -6,7 +7,6 @@ const createClass = async (data) => {
     const { student_ids, ...classData } = data;
 
     try {
-        // Validate that all student IDs exist
         if (student_ids && student_ids.length > 0) {
             const existingStudents = await prisma.student.findMany({
                 where: { id: { in: student_ids } },
@@ -15,24 +15,22 @@ const createClass = async (data) => {
 
             const existingStudentIds = existingStudents.map((student) => student.id);
 
-            // Check for missing student IDs
             const missingStudentIds = student_ids.filter((id) => !existingStudentIds.includes(id));
             if (missingStudentIds.length > 0) {
                 throw new Error(`The following student IDs do not exist: ${missingStudentIds.join(', ')}`);
             }
         }
 
-        // Create the class and associate students
         const newClass = await prisma.class.create({
             data: {
                 ...classData,
                 students: student_ids && student_ids.length > 0
                     ? {
-                        connect: student_ids.map((id) => ({ id })), // Connect students by their IDs
+                        connect: student_ids.map((id) => ({ id })),
                     }
                     : undefined,
             },
-            include: { students: true }, // Include students in the response
+            include: { students: true, teacher: true },
         });
 
         return { class: newClass };
@@ -44,23 +42,53 @@ const createClass = async (data) => {
 
 const getAllClasses = async () => {
     try {
-        return await prisma.class.findMany({
-            include: { teacher: true, students: true },
+        const classes = await prisma.class.findMany({
+            include: {
+                teacher: {
+                    include: { user: { select: { name: true } } },
+                },
+                students: true,
+            },
         });
+
+        return classes.map((classItem) => ({
+            ...classItem,
+            teacher: {
+                id: classItem.teacher.id,
+                user_id: classItem.teacher.user_id,
+                name: classItem.teacher.user.name,
+            },
+        }));
     } catch (error) {
-        console.error('Error fetching all classes:', error);
         throw new Error('Failed to fetch classes');
     }
 };
 
 const getClassById = async (id) => {
     try {
-        return await prisma.class.findUnique({
+        const classItem = await prisma.class.findUnique({
             where: { id: parseInt(id) },
-            include: { teacher: true, students: true },
+            include: {
+                teacher: {
+                    include: { user: { select: { name: true } } },
+                },
+                students: true,
+            },
         });
+
+        if (!classItem) {
+            throw new Error('Class not found');
+        }
+
+        return {
+            ...classItem,
+            teacher: {
+                id: classItem.teacher.id,
+                user_id: classItem.teacher.user_id,
+                name: classItem.teacher.user.name,
+            },
+        };
     } catch (error) {
-        console.error(`Error fetching class with ID ${id}:`, error);
         throw new Error('Failed to fetch class');
     }
 };
@@ -72,13 +100,10 @@ const updateClass = async (id, data) => {
         let invalidStudentIds = [];
         let duplicateStudentIds = [];
 
-        // Validate student IDs if provided
         if (student_ids && student_ids.length > 0) {
-            // Check for duplicate student IDs
             const uniqueStudentIds = new Set(student_ids);
             duplicateStudentIds = student_ids.filter((id, index) => student_ids.indexOf(id) !== index);
 
-            // Check for invalid student IDs
             const existingStudents = await prisma.student.findMany({
                 where: { id: { in: Array.from(uniqueStudentIds) } },
                 select: { id: true },
@@ -88,25 +113,29 @@ const updateClass = async (id, data) => {
             invalidStudentIds = Array.from(uniqueStudentIds).filter((id) => !existingStudentIds.includes(id));
         }
 
-        // Update the class and associate valid students
         const updatedClass = await prisma.class.update({
             where: { id: parseInt(id) },
             data: {
                 ...classData,
                 students: student_ids && student_ids.length > 0
                     ? {
-                        set: [], // Clear existing students
+                        set: [],
                         connect: student_ids
-                            .filter((id) => !invalidStudentIds.includes(id)) // Only connect valid IDs
+                            .filter((id) => !invalidStudentIds.includes(id))
                             .map((id) => ({ id })),
                     }
                     : undefined,
             },
-            include: { students: true }, // Include students in the response
+            include: { students: true, teacher: true },
         });
 
+        const teacher = await userService.getUserById(updatedClass.teacher.user_id);
+
         return {
-            class: updatedClass,
+            class: {
+                ...updatedClass,
+                teacherName: teacher ? teacher.name : null,
+            },
             invalidStudentIds,
             duplicateStudentIds,
         };
@@ -118,7 +147,6 @@ const updateClass = async (id, data) => {
 
 const deleteClass = async (id) => {
     try {
-        // Check if the class exists
         const classExists = await prisma.class.findUnique({
             where: { id },
         });
@@ -127,11 +155,9 @@ const deleteClass = async (id) => {
             throw new Error('Class not found');
         }
 
-
         await prisma.attendance.deleteMany({
             where: { class_id: id },
         });
-
 
         const assignments = await prisma.assignment.findMany({
             where: { class_id: id },
@@ -141,55 +167,50 @@ const deleteClass = async (id) => {
         const assignmentIds = assignments.map((assignment) => assignment.id);
 
         if (assignmentIds.length > 0) {
-            // Delete submissions related to assignments
             await prisma.submission.deleteMany({
                 where: { assignment_id: { in: assignmentIds } },
             });
 
-            // Delete assignments
             await prisma.assignment.deleteMany({
                 where: { id: { in: assignmentIds } },
             });
         }
 
-        // Step 3: Delete related content
         await prisma.content.deleteMany({
             where: { class_id: id },
         });
 
-        // Step 4: Disassociate files
         await prisma.file.updateMany({
             where: { class_id: id },
-            data: { class_id: null }, // Disassociate files from the class
+            data: { class_id: null },
         });
 
-        // Step 5: Remove students from the class
         await prisma.student.updateMany({
             where: { class_id: id },
-            data: { class_id: null }, // Unassign students from the class
+            data: { class_id: null },
         });
 
-        // Step 6: Delete notifications related to the class
         const notifications = await prisma.notification.findMany({
-            where: { class_id: id },
+            where: {
+                classes: {
+                    some: { id },
+                },
+            },
             select: { id: true },
         });
 
         const notificationIds = notifications.map((notification) => notification.id);
 
         if (notificationIds.length > 0) {
-            // Delete notification targets
             await prisma.notificationTarget.deleteMany({
                 where: { notification_id: { in: notificationIds } },
             });
 
-            // Delete notifications
             await prisma.notification.deleteMany({
                 where: { id: { in: notificationIds } },
             });
         }
 
-        // Finally, delete the class
         await prisma.class.delete({
             where: { id },
         });
@@ -203,7 +224,6 @@ const deleteClass = async (id) => {
 
 const transferDataClass = async (sourceClassId, newClassId) => {
     try {
-        // Step 1: Clone content from the source class to the new class
         const contents = await prisma.content.findMany({
             where: { class_id: sourceClassId },
         });
@@ -214,12 +234,11 @@ const transferDataClass = async (sourceClassId, newClassId) => {
                     title: content.title,
                     description: content.description,
                     urls: content.urls,
-                    class_id: newClassId, // Associate with the new class
+                    class_id: newClassId,
                 },
             });
         }
 
-        // Step 2: Clone files from the source class to the new class
         const files = await prisma.file.findMany({
             where: { class_id: sourceClassId },
         });
@@ -232,7 +251,7 @@ const transferDataClass = async (sourceClassId, newClassId) => {
                     mimetype: file.mimetype,
                     size: file.size,
                     uploaded_by: file.uploaded_by,
-                    class_id: newClassId, // Associate with the new class
+                    class_id: newClassId,
                 },
             });
         }

@@ -10,11 +10,12 @@ const createContent = async (data) => {
             data: {
                 ...rest,
                 files: {
-                    connect: files, // Attach files to the content
+                    connect: files,
                 },
             },
             include: {
-                files: true, // Include files in the response
+                files: true,
+
             },
         });
     } catch (error) {

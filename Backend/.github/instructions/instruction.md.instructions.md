@@ -2,4 +2,4 @@
 applyTo: '**'
 ---
 
-Never generate comments when generate code for me
+No inline comments on generated code

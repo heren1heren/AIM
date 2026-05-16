@@ -14,5 +14,6 @@ router.get('/:id', authorize(['admin', 'teacher', 'student']), classController.g
 router.put('/:id', authorize(['admin', 'teacher']), classController.updateClass); // Only admin and teacher can update a class
 router.delete('/:id', authorize(['admin']), classController.deleteClass); // Only admin can delete a class
 router.put('/transfer', authorize(['admin']), classController.transferDataClass); // Only admin can transfer class data
+router.get('/student/:studentId', authorize(['admin', 'student']), classController.getClassesByStudentId); // Admin and student can view classes by student ID
 
 export default router;
